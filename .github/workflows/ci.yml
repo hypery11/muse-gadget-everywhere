@@ -87,7 +87,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: muse-gadget-${{ matrix.artifact }}-debug
-          path: dist/
+          path: |
+            dist/muse-gadget-${{ matrix.artifact }}-debug.apk
+            dist/SHA256SUMS
           retention-days: 14
           if-no-files-found: error
 

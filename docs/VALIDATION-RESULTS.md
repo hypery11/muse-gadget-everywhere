@@ -5,7 +5,7 @@ Results were collected on 2026-10-04, with a copy/artwork build check on 2026-10
 | Check | Result and scope |
 | --- | --- |
 | Host Python regression | 197 passed; overlay and upstream SDK tests |
-| Universal and modern builds | Debug, instrumentation APK and unsigned release built; both CI matrix jobs passed on [e23e26f](https://github.com/hypery11/muse-gadget-everywhere/actions/runs/37215048403) |
+| Universal and modern builds | Debug, instrumentation APK and unsigned release built for both variants; ongoing results are in the [CI build history](https://github.com/hypery11/muse-gadget-everywhere/actions/workflows/ci.yml) |
 | Android lint | 0 errors; 18 warnings and 2 existing baseline warnings |
 | Modern native packaging | All 146 packaged native ELF libraries met 16 KiB alignment; zipalign passed |
 | Minimum/target API fixtures | API 24 and 35 ARM64 emulator runtime checks, including a 16 KiB API 35 image |

@@ -13,7 +13,7 @@ names = subprocess.check_output(
 ).decode().split('\0')
 files = [pathlib.Path(name) for name in names if name and (root / name).is_file()]
 errors = []
-private_dirs = {'.private', 'private', 'internal', 'node_modules', '.venv', 'build', '.gradle'}
+private_dirs = {'.private', 'private', 'internal', 'node_modules', '.venv', 'build', 'dist', '.gradle'}
 private_extensions = {'.jks', '.keystore', '.p12', '.pfx', '.key', '.pem', '.sqlite', '.sqlite3', '.db', '.log', '.jsonl'}
 private_names = {'pairing.json', 'android-sdk-report.json', 'community-launch.md',
                  'discord_post.md', 'demo.md', 'render_brand.mjs', 'score_motion.py', 'community_metrics.py'}

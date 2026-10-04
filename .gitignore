@@ -1,6 +1,7 @@
 *.iml
 .gradle/
 build/
+dist/
 local.properties
 .DS_Store
 __pycache__/

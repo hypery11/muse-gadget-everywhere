@@ -43,10 +43,12 @@ class PublicContentTest(unittest.TestCase):
 
     def test_internal_material_and_private_addresses_are_rejected(self):
         self.write('docs/internal/launch.md', 'Unpublished launch notes')
+        self.write('dist/debug-notes.txt', 'Local packaging notes')
         self.write('docs/device.json', '{"host":"10.1.2.3"}')
         result = self.check()
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('docs/internal/launch.md', result.stderr)
+        self.assertIn('dist/debug-notes.txt', result.stderr)
         self.assertIn('docs/device.json', result.stderr)
 
     def test_changed_or_unregistered_media_requires_review(self):
