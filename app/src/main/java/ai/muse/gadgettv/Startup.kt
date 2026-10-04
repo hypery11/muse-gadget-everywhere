@@ -29,7 +29,21 @@ object Startup {
 
     /** Subset of [BLE_PERMISSIONS] the user hasn't granted yet. */
     fun missingBlePermissions(activity: Activity): List<String> =
-        BLE_PERMISSIONS.filter {
+        missingPermissions(activity, BLE_PERMISSIONS)
+
+    /** Notification runtime permission (Android 13+). The foreground
+     *  service's own notification is exempt, but the service-ERROR alert
+     *  (`showError`, plain `notify`) needs this grant to be seen. */
+    val NOTIFICATION_PERMISSIONS: Array<String> =
+        if (Build.VERSION.SDK_INT >= 33) {
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            emptyArray()
+        }
+
+    /** Subset of [perms] the user hasn't granted yet (23+ API). */
+    fun missingPermissions(activity: Activity, perms: Array<String>): List<String> =
+        perms.filter {
             activity.checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
         }
 }

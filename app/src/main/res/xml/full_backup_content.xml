@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pre-12 companion to data_extraction_rules.xml: nothing here may be
+     backed up or transferred, on any API level. -->
+<full-backup-content>
+    <exclude domain="root" path="." />
+</full-backup-content>

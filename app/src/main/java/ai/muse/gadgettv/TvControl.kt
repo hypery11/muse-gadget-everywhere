@@ -8,10 +8,10 @@ import android.net.wifi.WifiManager
 data class TvResult(val ok: Boolean, val message: String)
 
 /**
- * TV hardware access for the Python layer. Passed into
- * `androidtv.service.main` so `tv.*` commands can launch apps and learn the
- * dongle's own LAN address (for Cast-to-self) without new permissions:
- * starting exported activities and reading the Wi-Fi address need none.
+ * Device hardware access for the Python layer. Passed into
+ * `androidtv.service.main` so `tv.*` commands can launch apps and learn this
+ * device's own LAN address (for Cast-to-self) without new permissions:
+ * starting exported activities and reading interface addresses need none.
  */
 class TvControl(private val context: Context) {
 
@@ -28,8 +28,9 @@ class TvControl(private val context: Context) {
         if (!android.provider.Settings.canDrawOverlays(context)) {
             return TvResult(
                 false,
-                "overlay permission missing; allow it once with: " +
-                    "adb shell appops set ai.muse.gadgettv SYSTEM_ALERT_WINDOW allow",
+                "overlay permission missing; on the Probe screen tap Grant " +
+                    "overlay, or run once: adb shell appops set " +
+                    "ai.muse.gadgettv SYSTEM_ALERT_WINDOW allow",
             )
         }
         return try {
@@ -62,18 +63,35 @@ class TvControl(private val context: Context) {
         return TvResult(true, (android.os.SystemClock.elapsedRealtime() / 1000).toString())
     }
 
-    /** The dongle's own Wi-Fi IPv4 address, for Cast-to-self. */
+    /** This device's own LAN IPv4 address, for Cast-to-self. */
     @Suppress("DEPRECATION")
     fun deviceIp(): TvResult {
-        return try {
+        // Fast path: Wi-Fi address, no permission needed.
+        try {
             val wifi = context.applicationContext
                 .getSystemService(Context.WIFI_SERVICE) as WifiManager
             val raw = wifi.connectionInfo.ipAddress
-            if (raw == 0) return TvResult(false, "no Wi-Fi address")
-            val dotted = listOf(0, 8, 16, 24).joinToString(".") { shift ->
-                ((raw shr shift) and 0xFF).toString()
+            if (raw != 0) {
+                val dotted = listOf(0, 8, 16, 24).joinToString(".") { shift ->
+                    ((raw shr shift) and 0xFF).toString()
+                }
+                return TvResult(true, dotted)
             }
-            TvResult(true, dotted)
+        } catch (e: Exception) {
+            // Fall through to interface enumeration.
+        }
+        // Slow path: Ethernet-only boxes, USB tethering, VPN-less oddballs.
+        // NetworkInterface needs no permission either.
+        return try {
+            val addrs = java.util.Collections.list(java.net.NetworkInterface.getNetworkInterfaces())
+                .asSequence()
+                .filter { it.isUp && !it.isLoopback }
+                .flatMap { java.util.Collections.list(it.inetAddresses).asSequence() }
+                .filterIsInstance<java.net.Inet4Address>()
+                .filter { !it.isLoopbackAddress && !it.isLinkLocalAddress }
+                .toList()
+            if (addrs.isEmpty()) TvResult(false, "no LAN IPv4 address")
+            else TvResult(true, addrs.first().hostAddress ?: "no LAN IPv4 address")
         } catch (e: Exception) {
             TvResult(false, "${e.javaClass.simpleName}: ${e.message}")
         }

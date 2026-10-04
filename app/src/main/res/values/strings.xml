@@ -1,4 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Muse Gadget TV</string>
+    <string name="app_name">Muse Gadget</string>
+    <string name="err_no_detail">no detail</string>
+
+    <!-- PairActivity: the one screen every user reads. -->
+    <string name="pair_ready">Ready to pair.</string>
+    <string name="pair_open_setup">Open setup (10 min)</string>
+    <string name="pair_cancel">Cancel</string>
+    <string name="pair_perm_denied">Bluetooth permission denied.\n\nAllow nearby-devices access, then reopen this screen.</string>
+    <string name="pair_starting">Starting…</string>
+    <string name="pair_bad_token">Bad SDK token in:\n%1$s\n\n%2$s\n\nFix the file, then reopen this screen.</string>
+    <string name="pair_token_saved">SDK token saved.\n\nStarting…</string>
+    <string name="pair_no_token">No SDK token found.\n\nPush one to:\n%1$s\n\nThen reopen this screen.</string>
+    <string name="pair_no_storage">This device has no shared storage, so there is nowhere to import an SDK token from.\n\nPairing needs a device with storage (phone, tablet, or a TV with internal storage).</string>
+    <string name="pair_failed">Pairing failed:\n%1$s: %2$s</string>
+    <string name="pair_no_adapter">No Bluetooth adapter (emulator or BT-less device).</string>
+    <string name="pair_bt_off">Bluetooth is off — enable it first.</string>
+    <string name="pair_no_peripheral">This Bluetooth chip can\'t advertise (no peripheral mode), so the Muse app can\'t see us.</string>
+    <string name="pair_perm_revoked">Bluetooth permission revoked mid-flow (%1$s).</string>
+    <string name="pair_cant_pair">Can\'t pair on this device:\n\n%1$s\n\nPairing needs a phone/tablet/TV whose Bluetooth chip supports peripheral mode.</string>
+    <string name="pair_setup_open">Setup open as:\n\n%1$s\n\nOn-air Bluetooth name: %2$s\n(apps can\'t rename it; if the Muse app can\'t find us, rename this device to %1$s in its Bluetooth or device-name settings, then reopen this screen.)\n\nIn the Muse app: Settings &gt; Devices &gt; Add Device.\n\nWaiting (10 min window)…</string>
+    <string name="pair_paired">Paired!\n\nStart the service from the main screen.</string>
+    <string name="pair_window_closed">Window closed without pairing.</string>
+
+    <!-- ProbeActivity: developer probe; labels still belong in resources. -->
+    <string name="probe_start_service">Start service</string>
+    <string name="probe_pair">Pair</string>
+    <string name="probe_reset">Reset pairing</string>
+    <string name="probe_demo">Demo tv.*</string>
+    <string name="probe_grant_overlay">Grant overlay</string>
+    <string name="probe_battery">Battery settings</string>
+    <string name="probe_settings_missing">This settings page doesn\'t exist on this device.</string>
+    <string name="probe_reset_done">Pairing cleared. Pair again to reconnect.</string>
+    <string name="probe_reset_failed">Reset failed: %1$s</string>
+    <string name="probe_demo_append">%1$s\n\ndemo: %2$s</string>
+    <string name="probe_demo_failed">%1$s\n\ndemo FAILED: %2$s</string>
+    <string name="probe_starting_python">%1$s\n\nstarting python…</string>
+    <string name="probe_output">%1$s\n\n%2$s</string>
+
+    <!-- GadgetService notification. -->
+    <string name="notif_channel">Muse Gadget</string>
+    <string name="notif_connected">Connected to your Muse</string>
+    <string name="notif_stopped">Muse Gadget stopped: %1$s</string>
 </resources>

@@ -34,7 +34,10 @@ import java.util.concurrent.TimeUnit
  * `onNotificationSent` before the next notify; BlueZ staggers with sleeps.
  */
 @SuppressLint("MissingPermission") // PairActivity guarantees runtime grants before open().
-class BleTransport(private val context: Context) {
+// Deliberately context-free: `active` is a static singleton, so this class
+// must never hold ANY Context (even the application one trips StaticFieldLeak
+// and pins the field for the process lifetime). Callers pass one per call.
+class BleTransport {
 
     companion object {
         private const val TAG = "BleTransport"
@@ -79,7 +82,7 @@ class BleTransport(private val context: Context) {
         }
     }
 
-    fun adapterName(): String {
+    fun adapterName(context: Context): String {
         return try {
             val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
             manager.adapter?.name ?: "unknown"
@@ -141,13 +144,14 @@ class BleTransport(private val context: Context) {
 
     // -- Lifecycle --------------------------------------------------------------
 
-    fun open(bleName: String) {
+    fun open(context: Context, bleName: String) {
         if (opened) return
         // Singleton: a previous window's server/advertiser must never linger
-        // beside a new one (centrals pick instances arbitrarily).
+        // beside a new one (centrals pick instances arbitrarily). Take over
+        // only AFTER we fully open: if anything below throws, `active`
+        // must not point at a half-open transport.
         synchronized(BleTransport::class.java) {
             active?.shutdown()
-            active = this
         }
         val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val adapter: BluetoothAdapter = manager.adapter
@@ -183,7 +187,9 @@ class BleTransport(private val context: Context) {
         service.addCharacteristic(tx)
         txChar = tx
 
-        gattServer = manager.openGattServer(context, serverCallback)
+        // Application context: the framework holds this past our calls,
+        // and the caller's Activity may die while we advertise.
+        gattServer = manager.openGattServer(context.applicationContext, serverCallback)
             ?: throw IllegalStateException("openGattServer failed")
         if (!gattServer!!.addService(service)) {
             throw IllegalStateException("addService failed")
@@ -211,11 +217,20 @@ class BleTransport(private val context: Context) {
         advertiser!!.startAdvertising(settings, data, scanResponse, advertiseCallback)
         Log.i(TAG, "advertising service for $bleName (record name is the adapter name)")
         opened = true
+        synchronized(BleTransport::class.java) {
+            active = this
+        }
     }
 
     fun shutdown() {
-        if (!opened) return
-        opened = false
+        // Whole check-and-teardown under one lock: shutdown races pairing
+        // completion (UI thread vs pairing thread); double-teardown must be
+        // impossible, not merely harmless.
+        synchronized(BleTransport::class.java) {
+            if (!opened) return
+            opened = false
+            if (active === this) active = null
+        }
         try {
             advertiser?.stopAdvertising(advertiseCallback)
         } catch (_: Exception) {
@@ -226,7 +241,13 @@ class BleTransport(private val context: Context) {
         }
         gattServer = null
         advertiser = null
+        txChar = null
         device = null
+        mtu = DEFAULT_MTU
+        notifying = false
+        pendingWrites.clear()
+        // controller deliberately NOT cleared: attach is bind-once per
+        // instance, and instances are never reopened after shutdown.
     }
 
     private val advertiseCallback = object : AdvertiseCallback() {
@@ -243,7 +264,7 @@ class BleTransport(private val context: Context) {
     private val serverCallback = object : BluetoothGattServerCallback() {
         override fun onConnectionStateChange(dev: BluetoothDevice, status: Int, newState: Int) {
             // The callback fires for EVERY BLE link while our server is open
-            // (e.g. the Chromecast Remote reconnecting). Only the peer that
+            // (e.g. a TV remote reconnecting). Only the peer that
             // writes our RX characteristic is the setup phone; ignore the rest.
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.i(TAG, "BLE connected: ${dev.address} (bound=${device?.address})")

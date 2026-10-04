@@ -27,14 +27,14 @@ class PairActivity : Activity() {
         status = TextView(this).apply {
             textSize = 20f
             setPadding(48, 48, 48, 48)
-            text = "Ready to pair."
+            text = getString(R.string.pair_ready)
         }
         startButton = Button(this).apply {
-            text = "Open setup (10 min)"
+            text = getString(R.string.pair_open_setup)
             setOnClickListener { startPairing() }
         }
         cancelButton = Button(this).apply {
-            text = "Cancel"
+            text = getString(R.string.pair_cancel)
             setOnClickListener { finish() }
         }
         val buttons = LinearLayout(this).apply {
@@ -46,6 +46,8 @@ class PairActivity : Activity() {
         setContentView(
             LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
+                // See ProbeActivity: stay below the status bar on 35+.
+                fitsSystemWindows = true
                 addView(buttons)
                 addView(ScrollView(this@PairActivity).apply { addView(status) })
             },
@@ -69,18 +71,38 @@ class PairActivity : Activity() {
         val granted = grantResults.isNotEmpty() &&
             grantResults.all { it == PackageManager.PERMISSION_GRANTED }
         startButton.isEnabled = granted
-        if (!granted) status.text = "Bluetooth permission denied.\n\nAllow nearby-devices access, then reopen this screen."
+        if (!granted) status.text = getString(R.string.pair_perm_denied)
     }
 
     private fun setStatus(text: String) {
         runOnUiThread { status.text = text }
     }
 
+    /** Non-null when BLE peripheral mode can't work; the text says why. */
+    private fun peripheralBlocker(): String? {
+        return try {
+            val manager = getSystemService(android.bluetooth.BluetoothManager::class.java)
+            val adapter = manager?.adapter
+                ?: return getString(R.string.pair_no_adapter)
+            if (!adapter.isEnabled) return getString(R.string.pair_bt_off)
+            // Null advertiser is the only veto. isMultipleAdvertisementSupported
+            // means >1 SIMULTANEOUS sets; a single-ad chipset runs our one
+            // advertisement fine, so it must not refuse (matches Probe's
+            // ble_peripheral_ready and BleTransport.open's own check).
+            if (adapter.bluetoothLeAdvertiser == null) {
+                return getString(R.string.pair_no_peripheral)
+            }
+            null
+        } catch (e: SecurityException) {
+            getString(R.string.pair_perm_revoked, e.message ?: e.javaClass.simpleName)
+        }
+    }
+
     private fun startPairing() {
         if (pairing) return
         pairing = true
         startButton.visibility = View.GONE
-        setStatus("Starting…")
+        setStatus(getString(R.string.pair_starting))
         Thread({ runPairing() }, "pairing").start()
     }
 
@@ -93,7 +115,14 @@ class PairActivity : Activity() {
             // SDK token: adb push it to the import dir, no permission needed:
             // /sdcard/Android/data/ai.muse.gadgettv/files/import/muse_token.txt
             var sdkToken: String? = null
-            val importFile = File(getExternalFilesDir("import"), "muse_token.txt")
+            val importDir = getExternalFilesDir("import")
+            if (importDir == null) {
+                setStatus(getString(R.string.pair_no_storage))
+                pairing = false
+                runOnUiThread { startButton.visibility = View.VISIBLE }
+                return
+            }
+            val importFile = File(importDir, "muse_token.txt")
             if (importFile.exists()) {
                 val token = importFile.readText().trim()
                 if (token.isNotEmpty()) {
@@ -101,17 +130,17 @@ class PairActivity : Activity() {
                         py.getModule("androidtv.pairing")
                             .callAttr("save_sdk_token", filesDir, token)
                     } catch (e: Exception) {
-                        setStatus("Bad SDK token in:\n${importFile.absolutePath}\n\n${e.message}\n\nFix the file, then reopen this screen.")
+                        setStatus(getString(R.string.pair_bad_token, importFile.absolutePath, e.message ?: e.javaClass.simpleName))
                         pairing = false
                         runOnUiThread { startButton.visibility = View.VISIBLE }
                         return
                     }
                     sdkToken = token
-                    setStatus("SDK token saved.\n\nStarting…")
+                    setStatus(getString(R.string.pair_token_saved))
                 }
             }
             if (sdkToken == null) {
-                setStatus("No SDK token found.\n\nPush one to:\n${importFile.absolutePath}\n\nThen reopen this screen.")
+                setStatus(getString(R.string.pair_no_token, importFile.absolutePath))
                 pairing = false
                 runOnUiThread { startButton.visibility = View.VISIBLE }
                 return
@@ -120,23 +149,29 @@ class PairActivity : Activity() {
             val bleName = py.getModule("androidtv.pairing")
                 .callAttr("get_ble_name", filesDir)
                 .toString()
-            val transport = BleTransport(this).also { this.transport = it }
-            transport.open(bleName)
-            val recordName = transport.adapterName()
-            setStatus(
-                "Setup open as:\n\n$bleName\n\n" +
-                    "On-air Bluetooth name: $recordName\n" +
-                    "(apps can't rename it; if the Muse app can't find us, " +
-                    "rename this Chromecast to $bleName in Settings > System > About > Device name.)\n\n" +
-                    "In the Muse app: Settings > Devices > Add Device.\n\n" +
-                    "Waiting (10 min window)…",
-            )
+            // Fail fast with guidance on peripheral-less hardware
+            // (emulators, some boxes): transport.open would throw anyway,
+            // but this says WHY instead of an exception class name.
+            val peripheralError = peripheralBlocker()
+            if (peripheralError != null) {
+                setStatus(getString(R.string.pair_cant_pair, peripheralError))
+                pairing = false
+                runOnUiThread { startButton.visibility = View.VISIBLE }
+                return
+            }
+            val transport = BleTransport().also { this.transport = it }
+            transport.open(this, bleName)
+            val recordName = transport.adapterName(this)
+            setStatus(getString(R.string.pair_setup_open, bleName, recordName))
             val paired = py.getModule("androidtv.pairing")
                 .callAttr("run_pairing", transport, filesDir, sdkToken, 600)
                 .toJava(Boolean::class.java)
-            setStatus(if (paired) "Paired!\n\nStart the service from the main screen." else "Window closed without pairing.")
+            setStatus(
+                if (paired) getString(R.string.pair_paired)
+                else getString(R.string.pair_window_closed),
+            )
         } catch (e: Exception) {
-            setStatus("Pairing failed:\n${e.javaClass.simpleName}: ${e.message}")
+            setStatus(getString(R.string.pair_failed, e.javaClass.simpleName, e.message ?: getString(R.string.err_no_detail)))
         } finally {
             pairing = false
             try {

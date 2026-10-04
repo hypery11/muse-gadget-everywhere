@@ -22,7 +22,13 @@ class GadgetService : Service() {
 
         fun start(context: Context) {
             val intent = Intent(context, GadgetService::class.java)
-            context.startForegroundService(intent)
+            // startForegroundService is 26+; on 24/25 a plain start is
+            // enough because background-service limits don't exist yet.
+            if (Build.VERSION.SDK_INT >= 26) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
         }
 
         fun stop(context: Context) {
@@ -36,15 +42,7 @@ class GadgetService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Muse Gadget", NotificationManager.IMPORTANCE_MIN),
-        )
-        val notification = Notification.Builder(this, CHANNEL)
-            .setContentTitle("Muse Gadget")
-            .setContentText("Connected to your Muse")
-            .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
-            .build()
+        val notification = buildNotification(getString(R.string.notif_connected))
         if (Build.VERSION.SDK_INT >= 29) {
             startForeground(
                 NOTIFICATION_ID, notification,
@@ -75,7 +73,7 @@ class GadgetService : Service() {
                 )
         } catch (e: Exception) {
             Log.e(TAG, "service loop failed", e)
-            showError("Muse Gadget stopped: ${e.javaClass.simpleName}")
+            showError(getString(R.string.notif_stopped, e.javaClass.simpleName))
         } finally {
             running = false
             stopSelf()
@@ -84,14 +82,29 @@ class GadgetService : Service() {
 
     private fun showError(text: String) {
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(
-            NOTIFICATION_ID,
-            Notification.Builder(this, CHANNEL)
-                .setContentTitle("Muse Gadget")
+        manager.notify(NOTIFICATION_ID, buildNotification(text))
+    }
+
+    /** Notification channels are 26+; on 24/25 use the legacy builder. */
+    private fun buildNotification(text: String): Notification {
+        val title = getString(R.string.notif_channel)
+        if (Build.VERSION.SDK_INT >= 26) {
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(
+                NotificationChannel(CHANNEL, title, NotificationManager.IMPORTANCE_MIN),
+            )
+            return Notification.Builder(this, CHANNEL)
+                .setContentTitle(title)
                 .setContentText(text)
-                .setSmallIcon(android.R.drawable.stat_notify_error)
-                .build(),
-        )
+                .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
+                .build()
+        }
+        @Suppress("DEPRECATION")
+        return Notification.Builder(this)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
+            .build()
     }
 
     override fun onDestroy() {

@@ -1,11 +1,16 @@
 # Muse Gadget TV
 
-One APK that turns a retired **Chromecast with Google TV** (or any Android TV)
-into a complete Muse gadget. No root, no Termux.
+One APK that turns a retired **Chromecast with Google TV** (or any Android
+TV — or any Android phone/tablet, API 24+) into a complete Muse gadget.
+No root, no Termux.
 
 Upstream `musegadget` runs unmodified inside the app via
 [Chaquopy](https://chaquo.com/chaquopy/); this repo is a thin Android shell:
-BLE transport, foreground service, and TV-specific commands.
+BLE transport, foreground service, and `tv.*` commands (app launch on
+any device; Cast-to-self wherever a Cast receiver runs).
+
+Compatibility matrix (what was proven, on which API/ABI, and how):
+[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 ## Status
 
@@ -22,6 +27,11 @@ BLE transport, foreground service, and TV-specific commands.
       PyChromecast ships in the APK.
 - [x] Submission assets: photo set + Discord draft (`docs/DISCORD_POST.md`)
       ready. Still yours: post it; optionally film the TV for video.
+- [x] Universal APK (v0.2.0): minSdk 24, all four ABIs, phone + Leanback
+      launchers. Proven on API 24/31/34/35 and armv7a/arm64 (full
+      phone-pairing proven on sabrina only; emulators prove install,
+      probe, service, and advertise-start); x86/x86_64 ship in the APK
+      (static-verified, no Intel host to boot).
 
 ## Screenshots
 
@@ -35,9 +45,10 @@ Main screen (probe green), YouTube opened by a Muse command, and the
 
 ## Build
 
-Prerequisites: JDK 17, Android SDK (platform 34, build-tools 34),
+Prerequisites: JDK 17, Android SDK (platform 35, build-tools 35),
 `python3.11` on PATH (Chaquopy build requirement; 3.11 is the newest
-Python with 32-bit ARM Chaquopy support).
+Python with 32-bit Chaquopy support — and the newest that still covers
+all four ABIs).
 
 Verify with: `python3.11 --version && java -version && adb --version`.
 
