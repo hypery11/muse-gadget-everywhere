@@ -52,5 +52,7 @@ is not a supported setup procedure and is not counted as fresh 0.3 pairing.
   the old external import file is optional and is deleted after successful import.
 - No 72-hour soak result is claimed. Android 16/17 behavior and a target-SDK
   upgrade are not validated by the API-35 run. Newer emulator images do exist.
-- Release APKs remain unsigned unless private release-signing variables are
-  supplied. No store submission or new public release is implied by these tests.
+- The Gradle release build type remains unsigned unless private release-signing
+  variables are supplied. Published [0.3.0 downloads](https://github.com/hypery11/muse-gadget-everywhere/releases/tag/v0.3.0)
+  use the debug build type and the same development certificate as published 0.2.
+  No store submission or production signing is claimed.

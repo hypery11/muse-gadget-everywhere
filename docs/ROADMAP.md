@@ -2,7 +2,7 @@
 
 [Project](../README.md) · [Contributing](../CONTRIBUTING.md)
 
-This is a prioritized direction, not a delivery-date promise. The current public release is 0.2; 0.3 is under development.
+This is a prioritized direction, not a delivery-date promise. The current public release is [0.3.0](https://github.com/hypery11/muse-gadget-everywhere/releases/tag/v0.3.0), with universal and modern APKs using development signing.
 
 ## Make the first success easy
 
@@ -24,7 +24,7 @@ This is a prioritized direction, not a delivery-date promise. The current public
 
 - Complete native dependency remediation and review build provenance.
 - Establish production signing and documented update continuity.
-- Ship clearly named universal/modern artifacts with checksums and release notes.
+- Preserve clearly named universal/modern artifacts, checksums and release notes for each version.
 - Keep release screenshots and feature descriptions aligned with the downloadable version.
 
 ## Grow useful examples

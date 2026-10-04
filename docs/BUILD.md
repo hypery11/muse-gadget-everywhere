@@ -41,12 +41,14 @@ use the same output path: copy an APK before building another variant.
 `-PsplitApks=true` also creates ABI APKs; Python asset archives limit how much
 ordinary Android ABI splits can reduce size.
 
-Release builds stay unsigned unless all four private environment variables are
+The **Gradle release build type** stays unsigned unless all four private environment variables are
 provided: `MUSE_RELEASE_STORE`, `MUSE_RELEASE_STORE_PASSWORD`,
 `MUSE_RELEASE_KEY_ALIAS`, `MUSE_RELEASE_KEY_PASSWORD`.
 Run `./gradlew :app:assembleRelease` after configuring them in your secret store.
 Never commit the keystore or passwords. An unsigned release build is useful for
 packaging checks and is not an installable published release.
+
+GitHub Release [0.3.0](https://github.com/hypery11/muse-gadget-everywhere/releases/tag/v0.3.0) distributes installable **debug build type** APKs, built with the same persistent development signing key used for the published 0.2 APK. Both universal and modern downloads include checksums. They are not production-signed; the signing key stays outside the repository. Ordinary CI artifacts below use separate, temporary keys and are not interchangeable updates.
 
 
 For development checks, see [CONTRIBUTING](../CONTRIBUTING.md).

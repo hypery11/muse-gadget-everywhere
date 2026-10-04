@@ -11,7 +11,7 @@
 
 ![Muse, beyond the chat: an open-source Android runtime, illustrated with phone, tablet and TV layouts](docs/social-preview.png)
 
-*Phone, tablet and TV layouts from the 0.3 development UI; see [device validation](#what-is-verified) for tested hardware. The latest published APK is **0.2.0**; the features and interface below require a 0.3 [source build](docs/BUILD.md) or development CI artifact until 0.3 is released.*
+*Phone, tablet and TV layouts from 0.3.0; see [device validation](#what-is-verified) for tested hardware. [Download 0.3.0](https://github.com/hypery11/muse-gadget-everywhere/releases/tag/v0.3.0) to try this interface. Published APKs use development signing; production signing remains planned.*
 
 ## Build an Android endpoint, keep the SDK upstream
 
@@ -42,7 +42,7 @@ The app uses the **unmodified upstream Muse Gadget SDK** for pairing and cloud c
 
 ## Quick start
 
-**For the current 0.3 experience:** [build and install the APK](docs/BUILD.md), or get a development artifact from a successful [CI run](https://github.com/hypery11/muse-gadget-everywhere/actions/workflows/ci.yml). **For the published 0.2 release:** [download `app-debug.apk`](https://github.com/hypery11/muse-gadget-everywhere/releases/download/v0.2.0/app-debug.apk); it has the earlier pairing/TV controls and UI. Published 0.2 is a development-signed APK.
+**Download 0.3.0:** [Universal APK — including Chromecast](https://github.com/hypery11/muse-gadget-everywhere/releases/download/v0.3.0/muse-gadget-0.3.0-universal-debug.apk) · [Modern APK — 64-bit / 16 KiB](https://github.com/hypery11/muse-gadget-everywhere/releases/download/v0.3.0/muse-gadget-0.3.0-modern-debug.apk) · [Release notes and checksums](https://github.com/hypery11/muse-gadget-everywhere/releases/tag/v0.3.0). These development-signed APKs use the same signing certificate as the published 0.2 APK. Use `adb install -r` to update without uninstalling; see [upgrade instructions](docs/GETTING_STARTED.md#install). You can also [build from source](docs/BUILD.md).
 
 1. **Install on your Android device.** Android 7.0+ is the minimum. Use the universal build for Chromecast; devices with 16 KiB pages need the modern build. [Choose a build and connect ADB →](docs/GETTING_STARTED.md)
 2. **Try it locally.** Open the app → **Start service → Try a card → Show card**. A visible message is your first success; no Muse account is needed for this step.

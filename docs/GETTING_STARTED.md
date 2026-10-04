@@ -2,7 +2,7 @@
 
 [Project](../README.md) · [Build](BUILD.md) · [繁體中文](../README.zh-TW.md)
 
-This guide describes **0.3 development source/CI builds**. The published 0.2 APK has the earlier Probe/Pair interface; it does not contain the new local control dashboard.
+This guide describes **0.3.0**, available as installable APKs from [GitHub Releases](https://github.com/hypery11/muse-gadget-everywhere/releases/tag/v0.3.0), or as a [source build](BUILD.md).
 
 ## Choose a build
 
@@ -16,16 +16,20 @@ If unsure, connect ADB and run `adb shell getconf PAGE_SIZE` (4096 or 16384) and
 
 ## Install
 
+Download `muse-gadget-0.3.0-universal-debug.apk` or `muse-gadget-0.3.0-modern-debug.apk` from the release above. `SHA256SUMS` is provided alongside the APKs. Published 0.3.0 APKs use the same development signing certificate as the published 0.2 APK.
+
 On a phone/tablet, enable Developer options and USB debugging, connect USB and accept the Android authorization prompt. On Chromecast with Google TV, open Settings → System → About and tap the Android TV OS build entry seven times. Enable the debugging option offered by that device.
 
 For network ADB, use the address/port shown by Android. If the device offers wireless pairing, run `adb pair HOST:PAIR_PORT`, then `adb connect HOST:CONNECT_PORT`. Older TV builds may offer debugging on port 5555 without a separate pairing-code flow. Ports and menu labels vary by Android version; do not assume the pairing port is the connection port.
 
 ```sh
 adb devices
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r muse-gadget-0.3.0-universal-debug.apk
 ```
 
-An incompatible signing key blocks an in-place update. Do not uninstall reflexively: uninstalling erases pairing and local settings. Keep the original signing key for updates.
+Use the modern filename instead if that is your selected build; source builds are at `app/build/outputs/apk/debug/app-debug.apk`. The `-r` option updates in place and preserves app data. Open the app and start the service after updating.
+
+An incompatible signing key blocks an in-place update, including some local builds and CI artifacts. Do not uninstall reflexively: uninstalling erases pairing and local settings. Keep the original signing key for updates. Production signing is not established yet; these APKs remain development-signed.
 
 ## Try local controls
 

@@ -6,7 +6,7 @@
 
 ![Muse，走出聊天室：Android 開源執行環境與手機、平板、TV 介面](docs/social-preview.png)
 
-> 圖片展示 **0.3 開發中原始碼**的手機、平板與 TV 版型，已測硬體請見下方驗證範圍。目前公開 APK 仍是 **0.2.0**，使用舊版介面，主要提供配對與 TV 控制。要體驗新版，請依[建置指南](docs/BUILD.md)自行編譯，或下載成功 CI run 的開發版產物。
+> 圖片展示 **0.3.0** 的手機、平板與 TV 版型，已測硬體請見下方驗證範圍。[下載 Universal APK（含 Chromecast）](https://github.com/hypery11/muse-gadget-everywhere/releases/download/v0.3.0/muse-gadget-0.3.0-universal-debug.apk) · [Modern APK（64 位元／16 KiB）](https://github.com/hypery11/muse-gadget-everywhere/releases/download/v0.3.0/muse-gadget-0.3.0-modern-debug.apk) · [版本說明與 SHA256](https://github.com/hypery11/muse-gadget-everywhere/releases/tag/v0.3.0)。APK 使用開發簽章，與公開 0.2 版憑證相同；正式產品簽章仍待建立。
 
 ## 給開源開發者的入口
 
@@ -22,7 +22,7 @@ cd muse-gadget-everywhere
 
 ## 先讓它做一件有用的事
 
-1. 安裝 APK：Chromecast 請用 **universal**；需要 16 KiB 記憶體頁面的 ARM64/x86_64 裝置請用 **modern**。最低 Android 7.0，硬體能力另有差異。
+1. 下載上方 APK：Chromecast 請用 **universal**；需要 16 KiB 記憶體頁面的 ARM64/x86_64 裝置請用 **modern**。最低 Android 7.0，硬體能力另有差異。從公開 0.2 版升級時，使用 `adb install -r muse-gadget-0.3.0-universal-debug.apk` 保留資料，不必先移除 App；自行編譯或 CI 產物可能使用不同簽章，請見[升級說明](docs/GETTING_STARTED.md#install)。
 2. 開啟 App → **Start service → Try a card → Show card**。先看到訊息出現在螢幕上；這一步不必配對 Muse。
 3. 要遠端控制時，回首頁選 **Pair with Muse**。從 [gadgets.muse.ai](https://gadgets.muse.ai/settings/sdk-tokens) 取得 SDK token，儲存後開啟配對視窗。
 4. Muse 手機 App → Settings → Devices → Add Device，完成配對後選 **Start service & open controls**。
