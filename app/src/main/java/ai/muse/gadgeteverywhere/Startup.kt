@@ -1,4 +1,4 @@
-package ai.muse.gadgettv
+package ai.muse.gadgeteverywhere
 
 import android.Manifest
 import android.app.Activity

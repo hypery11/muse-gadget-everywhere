@@ -1,4 +1,4 @@
-package ai.muse.gadgettv
+package ai.muse.gadgeteverywhere
 
 import android.app.Notification
 import android.app.NotificationChannel

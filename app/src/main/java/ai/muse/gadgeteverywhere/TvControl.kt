@@ -1,4 +1,4 @@
-package ai.muse.gadgettv
+package ai.muse.gadgeteverywhere
 
 import android.content.Context
 import android.content.Intent
@@ -30,7 +30,7 @@ class TvControl(private val context: Context) {
                 false,
                 "overlay permission missing; on the Probe screen tap Grant " +
                     "overlay, or run once: adb shell appops set " +
-                    "ai.muse.gadgettv SYSTEM_ALERT_WINDOW allow",
+                    "ai.muse.gadgeteverywhere SYSTEM_ALERT_WINDOW allow",
             )
         }
         return try {

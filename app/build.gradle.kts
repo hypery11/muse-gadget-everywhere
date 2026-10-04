@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "ai.muse.gadgettv"
+    namespace = "ai.muse.gadgeteverywhere"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "ai.muse.gadgettv"
+        applicationId = "ai.muse.gadgeteverywhere"
         // 24 is the floor: Chaquopy needs 21+, and BLE peripheral stacks
         // before 24 are too buggy to pair against. Everything 26+ (channels,
         // startForegroundService) is runtime-gated in GadgetService.

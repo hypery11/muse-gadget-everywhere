@@ -1,4 +1,4 @@
-package ai.muse.gadgettv
+package ai.muse.gadgeteverywhere
 
 import android.app.Activity
 import android.content.pm.PackageManager
@@ -113,7 +113,7 @@ class PairActivity : Activity() {
             val filesDir = filesDir.absolutePath
 
             // SDK token: adb push it to the import dir, no permission needed:
-            // /sdcard/Android/data/ai.muse.gadgettv/files/import/muse_token.txt
+            // /sdcard/Android/data/ai.muse.gadgeteverywhere/files/import/muse_token.txt
             var sdkToken: String? = null
             val importDir = getExternalFilesDir("import")
             if (importDir == null) {

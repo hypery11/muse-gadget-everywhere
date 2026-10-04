@@ -1,9 +1,9 @@
-# Muse Gadget TV
+# Muse Gadget Everywhere
 
-[![release](https://img.shields.io/github/v/release/hypery11/muse-gadget-androidtv)](https://github.com/hypery11/muse-gadget-androidtv/releases)
-[![ci](https://github.com/hypery11/muse-gadget-androidtv/actions/workflows/ci.yml/badge.svg)](https://github.com/hypery11/muse-gadget-androidtv/actions)
+[![release](https://img.shields.io/github/v/release/hypery11/muse-gadget-everywhere)](https://github.com/hypery11/muse-gadget-everywhere/releases)
+[![ci](https://github.com/hypery11/muse-gadget-everywhere/actions/workflows/ci.yml/badge.svg)](https://github.com/hypery11/muse-gadget-everywhere/actions)
 [![api](https://img.shields.io/badge/API-24%2B-brightgreen)](docs/COMPATIBILITY.md)
-[![license](https://img.shields.io/github/license/hypery11/muse-gadget-androidtv)](LICENSE)
+[![license](https://img.shields.io/github/license/hypery11/muse-gadget-everywhere)](LICENSE)
 
 One APK that turns a retired **Chromecast with Google TV** (or any Android
 TV — or any Android phone/tablet, API 24+) into a complete Muse gadget.
@@ -20,8 +20,8 @@ Compatibility matrix (what was proven, on which API/ABI, and how):
 ## Quick start (no build needed)
 
 1. Grab `app-debug.apk` from the
-   [latest release](https://github.com/hypery11/muse-gadget-androidtv/releases).
-2. `adb install app-debug.apk`, open Muse Gadget, tap Grant overlay.
+   [latest release](https://github.com/hypery11/muse-gadget-everywhere/releases).
+2. `adb install app-debug.apk`, open Muse Gadget Everywhere, tap Grant overlay.
 3. Get a token at
    [gadgets.muse.ai](https://gadgets.muse.ai/settings/sdk-tokens),
    import it (Pairing step 2 below), tap Pair.
@@ -97,8 +97,8 @@ debugging instead of wireless. Everything else is identical.
 4. `./gradlew :app:assembleDebug` and
    `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
 5. Grant the overlay exemption so the background service may open apps:
-   open Muse Gadget and tap Grant overlay (or once via adb:
-   `adb shell appops set ai.muse.gadgettv SYSTEM_ALERT_WINDOW allow`).
+   open Muse Gadget Everywhere and tap Grant overlay (or once via adb:
+   `adb shell appops set ai.muse.gadgeteverywhere SYSTEM_ALERT_WINDOW allow`).
    Without it `tv.launch` fails with an actionable error instead of a
    silent no-op (Android 10+ blocks background activity starts). The
    gate is deliberately uniform: even the foreground Demo button
@@ -112,9 +112,9 @@ debugging instead of wireless. Everything else is identical.
    the [Gadget SDK Terms](https://gadgets.muse.ai/sdk-terms).
 2. Push it to the import dir (no permission needed):
    `printf '%s' 'mgst_…' | adb shell \
-'cat > /sdcard/Android/data/ai.muse.gadgettv/files/import/muse_token.txt'`
+'cat > /sdcard/Android/data/ai.muse.gadgeteverywhere/files/import/muse_token.txt'`
    (use `printf`, not `echo -n`: some shells write a literal `-n`).
-3. Open Muse Gadget > Pair > Open setup (10-minute window).
+3. Open Muse Gadget Everywhere > Pair > Open setup (10-minute window).
 4. Phone: Muse app, Settings > Devices, turn on Developer mode, Add Device.
 5. The TV shows the BLE name (`MuseGadgetXXXXXX`) and the actual on-air
    Bluetooth name (apps can't rename it — that needs a privileged API).
@@ -127,7 +127,7 @@ debugging instead of wireless. Everything else is identical.
 - On the TV: main screen > Reset pairing (stops the service, deletes
   `pairing.json` only — identity and SDK token survive, like upstream
   `unpair`, so the BLE name stays stable across re-pairs).
-- Or: `adb shell pm clear ai.muse.gadgettv` (also clears the token import).
+- Or: `adb shell pm clear ai.muse.gadgeteverywhere` (also clears the token import).
 
 ## Troubleshooting
 
@@ -141,7 +141,7 @@ debugging instead of wireless. Everything else is identical.
   `adb logcat | grep -i bletransport` for `queued … pre-attach write`,
   `notify timeout`, or `setup peer bound` lines.
 - Service won't stay up: `adb logcat -b all | grep python.stderr` shows
-  the Python log; `run-as ai.muse.gadgettv ls files/musegadget/` shows
+  the Python log; `run-as ai.muse.gadgeteverywhere ls files/musegadget/` shows
   identity/pairing/token state (debug builds only).
 - `tv.launch` says overlay permission missing: tap Grant overlay on the
   main screen (or the appops command in TV setup step 5).

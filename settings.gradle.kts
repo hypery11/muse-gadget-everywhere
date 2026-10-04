@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "muse-gadget-androidtv"
+rootProject.name = "muse-gadget-everywhere"
 include(":app")

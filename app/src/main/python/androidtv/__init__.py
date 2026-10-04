@@ -1,1 +1,1 @@
-"""Muse Gadget for Android TV: thin overlay on upstream musegadget."""
+"""Muse Gadget Everywhere: thin Android overlay on upstream musegadget."""

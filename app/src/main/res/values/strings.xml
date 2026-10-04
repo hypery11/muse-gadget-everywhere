@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Muse Gadget</string>
+    <string name="app_name">Muse Gadget Everywhere</string>
     <string name="err_no_detail">no detail</string>
 
     <!-- PairActivity: the one screen every user reads. -->
@@ -39,7 +39,7 @@
     <string name="probe_output">%1$s\n\n%2$s</string>
 
     <!-- GadgetService notification. -->
-    <string name="notif_channel">Muse Gadget</string>
+    <string name="notif_channel">Muse Gadget Everywhere</string>
     <string name="notif_connected">Connected to your Muse</string>
-    <string name="notif_stopped">Muse Gadget stopped: %1$s</string>
+    <string name="notif_stopped">Muse Gadget Everywhere stopped: %1$s</string>
 </resources>
