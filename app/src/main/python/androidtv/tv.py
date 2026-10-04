@@ -15,10 +15,10 @@ TV_COMMAND_SPECS = {
     "tv.launch": {
         "description": (
             "Launch an app on this Android TV by package name "
-            "(com.google.android.youtube.tv) or open a URL / intent URI."
+            "(com.google.android.youtube.tv) or open an HTTP(S) URL."
         ),
         "required": {
-            "target": {"type": "string", "description": "Package name, URL or intent URI."},
+            "target": {"type": "string", "description": "Package name or HTTP(S) URL."},
         },
         "optional": {},
     },
@@ -76,7 +76,7 @@ def run_launch(tv_control, params: dict) -> dict:
         return error("target is required")
     result = tv_control.launch(target.strip())
     if _bridge_ok(result):
-        return ok({"result": _bridge_message(result)})
+        return ok({"status": "dispatched", "result": _bridge_message(result)})
     return error(_bridge_message(result))
 
 
@@ -86,7 +86,7 @@ def _is_started(state: dict) -> bool:
     BUFFERING counts as started (the load was accepted); UNKNOWN/IDLE
     with no title means the load died or never landed.
     """
-    return state.get("player") not in (None, "UNKNOWN", "IDLE")
+    return state.get("player") in ("PLAYING", "PAUSED", "BUFFERING")
 
 
 def _await_media_state(media_controller, tries: int = 4, gap_s: float = 2.0) -> dict:
@@ -110,6 +110,15 @@ def _await_media_state(media_controller, tries: int = 4, gap_s: float = 2.0) -> 
             break
         time.sleep(gap_s)
     return state
+
+
+def _await_condition(predicate, tries=16, gap_s=0.25):
+    import time
+    for _ in range(tries):
+        if predicate():
+            return True
+        time.sleep(gap_s)
+    return False
 
 
 def run_cast(tv_control, params: dict) -> dict:
@@ -154,19 +163,31 @@ def run_cast(tv_control, params: dict) -> dict:
                 "title": getattr(media, "title", None),
             })
         if action in ("play", "pause", "stop"):
+            if hasattr(cast.media_controller, "block_until_active"):
+                cast.media_controller.block_until_active(timeout=5)
+            expected = {"play": "PLAYING", "pause": "PAUSED", "stop": "IDLE"}[action]
             getattr(cast.media_controller, action)()
-            return ok({"host": host, "action": action})
+            if not _await_condition(lambda: getattr(cast.media_controller.status, "player_state", None) == expected):
+                return error(f"receiver did not confirm {action}")
+            return ok({"host": host, "action": action, "player": expected, "verified": True})
         if action == "volume":
+            import math
             try:
                 level = float(params.get("value"))
             except (TypeError, ValueError):
                 return error("volume needs value 0.0-1.0")
+            if not math.isfinite(level):
+                return error("volume must be finite")
             level = max(0.0, min(1.0, level))
             cast.set_volume(level)
-            return ok({"host": host, "volume": level})
+            if not _await_condition(lambda: abs(cast.status.volume_level - level) < 0.02):
+                return error("receiver did not confirm volume")
+            return ok({"host": host, "volume": round(cast.status.volume_level, 2), "verified": True})
         url = params.get("url")
         if not isinstance(url, str) or not url:
             return error("play_url needs url")
+        from androidtv.integrations import http_url
+        http_url(url)
         # pychromecast defaults streamType to LIVE; a VOD file loaded as
         # LIVE never leaves IDLE. Default to BUFFERED, allow LIVE.
         stream = (params.get("stream") or "BUFFERED").upper()
@@ -194,7 +215,10 @@ def run_cast(tv_control, params: dict) -> dict:
             state = _await_media_state(cast.media_controller)
         if not _is_started(state):
             return error(f"receiver did not start playback (player={state['player']})")
-        return ok({"host": host, "playing": url, **state})
+        content = getattr(cast.media_controller.status, "content_id", None)
+        if content is not None and content != url:
+            return error("receiver reports a different media item")
+        return ok({"host": host, "url": url, "status": "playing" if state["player"] == "PLAYING" else "accepted", **state})
     finally:
         if cast is not None:
             try:

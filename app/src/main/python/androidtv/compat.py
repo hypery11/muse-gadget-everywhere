@@ -115,6 +115,9 @@ class AndroidExecutor(UpstreamExecutor):
     def __init__(self, account, tv_control=None) -> None:
         super().__init__(account)
         self._tv_control = tv_control
+        from androidtv.workspace import Workspace
+        self.workspace = Workspace(os.path.join(account.home, "workspace"))
+        self.developer_enabled = lambda: False
 
     def run(self, command: str, params: dict, timeout_ms: int | None = None) -> dict:
         if command.startswith("tv."):
@@ -172,6 +175,9 @@ class AndroidExecutor(UpstreamExecutor):
         return options
 
     def system_run(self, params: dict, timeout_ms: int | None = None) -> dict:
+        from musegadget.executor import error
+        if not self.developer_enabled():
+            return error("system.run is disabled; enable trusted developer mode on the device")
         # Mirror of upstream Executor.system_run with /system/bin/sh. Keep in
         # sync per docs/UPSTREAM.md whenever the submodule moves.
         import signal
@@ -191,8 +197,11 @@ class AndroidExecutor(UpstreamExecutor):
         command = params.get("command")
         if not isinstance(command, str) or not command.strip():
             return error("command is required")
-        requested = params.get("timeout_ms") or timeout_ms
-        timeout_s = min(int(requested) / 1000 if requested else DEFAULT_TIMEOUT_S, MAX_TIMEOUT_S)
+        import math
+        requested = params.get("timeout_ms", timeout_ms)
+        if requested is not None and (isinstance(requested, bool) or not isinstance(requested, (int, float)) or not math.isfinite(requested) or requested <= 0):
+            return error("timeout_ms must be positive and finite")
+        timeout_s = min(requested / 1000 if requested is not None else DEFAULT_TIMEOUT_S, MAX_TIMEOUT_S)
         cwd = params.get("cwd") or self.account.home
         log.info("system.run as %s (timeout %ss)", self.account.name, timeout_s)
         started = time.monotonic()
@@ -204,56 +213,67 @@ class AndroidExecutor(UpstreamExecutor):
             )
         except OSError as exc:
             return error(f"could not start command: {exc}")
-        timed_out = False
+        # Drain both pipes incrementally: communicate() buffers unlimited output
+        # before clipping, allowing an otherwise bounded job to exhaust the app.
+        import selectors
+        buffers = {proc.stdout: bytearray(), proc.stderr: bytearray()}
+        truncated, timed_out = False, False
+        limit = 32768
+        deadline = started + timeout_s
+        with selectors.DefaultSelector() as selector:
+            for pipe in buffers:
+                os.set_blocking(pipe.fileno(), False)
+                selector.register(pipe, selectors.EVENT_READ)
+            while selector.get_map():
+                if time.monotonic() >= deadline:
+                    timed_out = True
+                    break
+                for key, _ in selector.select(min(0.1, max(0, deadline-time.monotonic()))):
+                    try:
+                        chunk = os.read(key.fileobj.fileno(), 65536)
+                    except BlockingIOError:
+                        continue
+                    if not chunk:
+                        selector.unregister(key.fileobj)
+                        continue
+                    buffer = buffers[key.fileobj]
+                    remaining = limit - len(buffer)
+                    buffer.extend(chunk[:remaining])
+                    truncated |= len(chunk) > remaining
+            if timed_out:
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+        for pipe in buffers:
+            pipe.close()
         try:
-            stdout, stderr = proc.communicate(timeout=timeout_s)
+            proc.wait(timeout=max(0.01, deadline-time.monotonic()) if not timed_out else KILL_GRACE_S)
         except subprocess.TimeoutExpired:
             timed_out = True
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-            try:
-                stdout, stderr = proc.communicate(timeout=KILL_GRACE_S)
-            except subprocess.TimeoutExpired as exc:
-                stdout, stderr = exc.stdout or b"", exc.stderr or b""
-                for pipe in (proc.stdout, proc.stderr):
-                    if pipe is not None:
-                        pipe.close()
-                proc.wait()
-        out, out_cut = _clip(stdout)
-        err, err_cut = _clip(stderr)
+            proc.wait(timeout=KILL_GRACE_S)
+        out, out_cut = _clip(bytes(buffers[proc.stdout]))
+        err, err_cut = _clip(bytes(buffers[proc.stderr]))
         return ok({
             "stdout": out,
             "stderr": err,
             "exit_code": proc.returncode,
             "timed_out": timed_out,
-            "truncated": out_cut or err_cut,
+            "truncated": truncated or out_cut or err_cut,
             "duration_ms": int((time.monotonic() - started) * 1000),
         })
 
     def file_op(self, op: str, params: dict) -> dict:
-        """Same file ops, in-process: there is no second Python to spawn.
-
-        Upstream isolates credentials by running file ops as another account.
-        Here everything shares one UID, so the credential store is fenced off
-        explicitly instead: Muse must never read pairing.json or the token.
-        """
-        import os
-
-        from musegadget import config, fileops
         from musegadget.executor import error, ok
-
-        path = params.get("path")
-        if isinstance(path, str):
-            denied = os.path.realpath(str(config.state_dir()))
-            if os.path.realpath(path).startswith(denied + os.sep):
-                return error("that path is outside what Muse may touch")
         try:
             if op == "read":
-                return ok(fileops.read(params))
+                return ok(self.workspace.read(params))
             if op == "write":
-                return ok(fileops.write(params))
+                return ok(self.workspace.write(params))
+            return error(f"unsupported file op: {op}")
         except Exception as exc:
             return error(f"{type(exc).__name__}: {exc}")
-        return error(f"unsupported file op: {op}")

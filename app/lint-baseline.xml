@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Accepted warnings (deliberate, revisit when verifiable):
-     - OldTargetApi + GradleDependency(compileSdk 37): SDK 36/37 exist as
-       platforms but Google ships NO emulator images for them, so behavior
-       changes can't be runtime-verified. Target stays 35 (current, Play
-       compliant) until a 36+ image lets us test the bump honestly. -->
+<!-- Accepted warnings: target/compile SDK 35 is the tested baseline.
+     Newer SDKs and emulator images are available; upgrading and validating
+     their behavior changes remains separate work. This is not a claim of
+     current Play submission eligibility. -->
 <issues format="6" by="lint 9.2.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.2.1)" variant="all" version="9.2.1">
 
     <issue

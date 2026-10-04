@@ -11,6 +11,7 @@ import android.view.ViewTreeObserver
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.EditText
 
 /** Shared visual kit: cards, buttons, status rows. One place so both
  *  screens stay in the same world. All dp scale with density; sp text
@@ -53,11 +54,11 @@ object Ui {
     fun sectionTitle(context: Context, text: String): TextView {
         return TextView(context).apply {
             this.text = text
-            textSize = 13f
+            textSize = 16f
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            letterSpacing = 0.12f
-            setTextColor(context.brand(R.color.ink_faint))
-            setPadding(0, 0, 0, context.dp(10))
+            setTextColor(context.brand(R.color.ink))
+            setPadding(0, context.dp(20), 0, context.dp(8))
+            accessibilityHeadingCompat()
         }
     }
 
@@ -68,8 +69,8 @@ object Ui {
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             isAllCaps = false
             minHeight = context.dp(52)
-            minimumWidth = context.dp(140)
-            val padH = context.dp(22)
+            minimumWidth = 0
+            val padH = context.dp(16)
             setPadding(padH, 0, padH, 0)
             setBackgroundResource(
                 if (primary) R.drawable.btn_primary else R.drawable.btn_secondary,
@@ -77,9 +78,8 @@ object Ui {
             setTextColor(
                 context.brand(if (primary) R.color.accent_ink else R.color.ink),
             )
-            // Buttons must never wrap mid-label ("DEM\nO\nTV.*"): parents
-            // scroll or size them; single line keeps every label intact.
-            isSingleLine = true
+            maxLines = 2
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = context.dp(8) }
         }
     }
 
@@ -88,6 +88,40 @@ object Ui {
 
     fun secondaryButton(context: Context, text: String): Button =
         buttonBase(context, text, false)
+
+    fun View.accessibilityHeadingCompat() {
+        if (android.os.Build.VERSION.SDK_INT >= 28) isAccessibilityHeading = true
+    }
+
+    fun field(context: Context, label: String, multiline: Boolean = false): EditText = EditText(context).apply {
+        contentDescription = label
+        hint = label
+        textSize = 16f
+        setTextColor(context.brand(R.color.ink))
+        setHintTextColor(context.brand(R.color.ink_dim))
+        setBackgroundResource(R.drawable.btn_secondary)
+        minHeight = context.dp(52)
+        setPadding(context.dp(14), context.dp(12), context.dp(14), context.dp(12))
+        isSingleLine = !multiline
+        if (multiline) { minLines = 2; maxLines = 5; gravity = Gravity.TOP }
+        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = context.dp(8) }
+    }
+
+    /** Narrow windows and enlarged text stack actions instead of clipping labels. */
+    fun actions(context: Context, vararg buttons: Button): LinearLayout = LinearLayout(context).apply {
+        val largest = buttons.maxOfOrNull { it.paint.measureText(it.text.toString()) + context.dp(32) } ?: 0f
+        val needed = largest * buttons.size + context.dp(8 * (buttons.size - 1))
+        val horizontal = needed <= context.dp(context.resources.configuration.screenWidthDp - 80) &&
+            context.resources.configuration.fontScale <= 1.2f
+        orientation = if (horizontal) LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
+        buttons.forEachIndexed { index, button ->
+            button.layoutParams = LinearLayout.LayoutParams(if (horizontal) 0 else -1, -2, if (horizontal) 1f else 0f).apply {
+                topMargin = context.dp(8)
+                if (horizontal && index > 0) marginStart = context.dp(8)
+            }
+            addView(button)
+        }
+    }
 
     /** Small status dot (8dp circle) tinted to [color]. */
     fun dot(context: Context, color: Int): View {
@@ -168,9 +202,9 @@ object Ui {
             orientation = LinearLayout.VERTICAL
             // 920dp sounds narrow until a 320dpi TV turns it into 1840px.
             // 620dp ≈ 1240px on TV, full-bleed on phones either way.
-            val maxW = context.dp(620)
-            val screenW = context.resources.displayMetrics.widthPixels
-            val w = Math.min(screenW - context.dp(32), maxW)
+            val maxW = context.dp(680)
+            val screenW = context.dp(context.resources.configuration.screenWidthDp)
+            val w = Math.min(screenW - context.dp(40), maxW)
             layoutParams = LinearLayout.LayoutParams(
                 w, LinearLayout.LayoutParams.WRAP_CONTENT,
             ).apply { gravity = Gravity.CENTER_HORIZONTAL }

@@ -60,7 +60,14 @@ class BleTransport {
     @Volatile private var lastNotifyStatus = BluetoothGatt.GATT_SUCCESS
     @Volatile private var opened = false
 
-    private var gattServer: BluetoothGattServer? = null
+    @Volatile private var closed = false
+    private val serviceLatch = CountDownLatch(1)
+    private val advertiseLatch = CountDownLatch(1)
+    @Volatile private var serviceStatus = -1
+    @Volatile private var advertiseStatus = -1
+    private val peers = java.util.concurrent.ConcurrentHashMap<String, Int>()
+
+    @Volatile private var gattServer: BluetoothGattServer? = null
     private var advertiser: BluetoothLeAdvertiser? = null
     private var txChar: BluetoothGattCharacteristic? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -68,7 +75,7 @@ class BleTransport {
     // -- Transport protocol (called from Python) -------------------------------
 
     /** Called once by Python so GATT callbacks can reach SetupController. */
-    fun attach_controller(controller: PyObject) {
+    fun attach_controller(controller: PyObject) = synchronized(pendingWrites) {
         this.controller = controller
         // Replay writes that arrived between open() and attach (Chaquo import
         // takes seconds; the phone may already be writing).
@@ -77,7 +84,7 @@ class BleTransport {
             try {
                 controller.callAttr("on_write", packet)
             } catch (e: Exception) {
-                Log.w(TAG, "replay on_write failed", e)
+                Log.w(TAG, "replay on_write failed")
             }
         }
     }
@@ -92,6 +99,7 @@ class BleTransport {
     }
 
     fun mtu(): Int = mtu
+    fun is_open(): Boolean = opened && !closed
 
     /**
      * Notify one packet; blocks until sent. Per-packet because Chaquopy
@@ -103,13 +111,15 @@ class BleTransport {
         return false
     }
 
-    fun send_packet(packet: ByteArray): Boolean {
+    @Synchronized fun send_packet(packet: ByteArray): Boolean {
+        if (!is_open() || packet.size > mtu - 3) return drop("transport closed or packet too large")
         val server = gattServer ?: return drop("no server")
         val dev = device ?: return drop("no bound peer")
         val tx = txChar ?: return drop("no TX char")
         if (!notifying) return drop("${packet.size}B, not subscribed")
         tx.value = packet
         val latch = CountDownLatch(1)
+        lastNotifyStatus = BluetoothGatt.GATT_FAILURE
         notifyLatch = latch
         @Suppress("DEPRECATION")
         val accepted = server.notifyCharacteristicChanged(dev, tx, false)
@@ -119,6 +129,7 @@ class BleTransport {
         }
         if (!latch.await(NOTIFY_TIMEOUT_S, TimeUnit.SECONDS)) {
             Log.w(TAG, "notify timeout (${packet.size}B)")
+            shutdown()
             return false
         }
         if (lastNotifyStatus != BluetoothGatt.GATT_SUCCESS) {
@@ -145,7 +156,9 @@ class BleTransport {
     // -- Lifecycle --------------------------------------------------------------
 
     fun open(context: Context, bleName: String) {
+        check(!closed) { "setup was cancelled" }
         if (opened) return
+        try {
         // Singleton: a previous window's server/advertiser must never linger
         // beside a new one (centrals pick instances arbitrarily). Take over
         // only AFTER we fully open: if anything below throws, `active`
@@ -195,6 +208,7 @@ class BleTransport {
             throw IllegalStateException("addService failed")
         }
 
+        check(serviceLatch.await(5, TimeUnit.SECONDS) && serviceStatus == BluetoothGatt.GATT_SUCCESS && !closed) { "GATT service registration failed or cancelled" }
         val settings = AdvertiseSettings.Builder()
             .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
             .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
@@ -215,11 +229,14 @@ class BleTransport {
             .addManufacturerData(PAIRED_FLAG_COMPANY_ID, byteArrayOf(0))
             .build()
         advertiser!!.startAdvertising(settings, data, scanResponse, advertiseCallback)
+        check(advertiseLatch.await(5, TimeUnit.SECONDS) && advertiseStatus == 0 && !closed) { "BLE advertising failed ($advertiseStatus) or cancelled" }
         Log.i(TAG, "advertising service for $bleName (record name is the adapter name)")
         opened = true
         synchronized(BleTransport::class.java) {
+            check(!closed) { "setup was cancelled" }
             active = this
         }
+        } catch (e: Exception) { shutdown(); throw e }
     }
 
     fun shutdown() {
@@ -227,10 +244,14 @@ class BleTransport {
         // completion (UI thread vs pairing thread); double-teardown must be
         // impossible, not merely harmless.
         synchronized(BleTransport::class.java) {
-            if (!opened) return
+            closed = true
             opened = false
             if (active === this) active = null
         }
+        advertiseLatch.countDown()
+        serviceLatch.countDown()
+        notifyLatch?.countDown()
+        handler.removeCallbacksAndMessages(null)
         try {
             advertiser?.stopAdvertising(advertiseCallback)
         } catch (_: Exception) {
@@ -246,40 +267,51 @@ class BleTransport {
         mtu = DEFAULT_MTU
         notifying = false
         pendingWrites.clear()
+        peers.clear()
         // controller deliberately NOT cleared: attach is bind-once per
         // instance, and instances are never reopened after shutdown.
     }
 
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-            Log.i(TAG, "advertising started")
+            advertiseStatus = 0
+            advertiseLatch.countDown()
         }
 
         override fun onStartFailure(errorCode: Int) {
-            Log.e(TAG, "advertising failed: $errorCode")
+            advertiseStatus = errorCode
+            advertiseLatch.countDown()
         }
     }
 
     @Suppress("DEPRECATION")
     private val serverCallback = object : BluetoothGattServerCallback() {
+        override fun onServiceAdded(status: Int, service: android.bluetooth.BluetoothGattService) {
+            serviceStatus = status
+            serviceLatch.countDown()
+        }
+
         override fun onConnectionStateChange(dev: BluetoothDevice, status: Int, newState: Int) {
-            // The callback fires for EVERY BLE link while our server is open
-            // (e.g. a TV remote reconnecting). Only the peer that
-            // writes our RX characteristic is the setup phone; ignore the rest.
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.i(TAG, "BLE connected: ${dev.address} (bound=${device?.address})")
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                Log.i(TAG, "BLE disconnected: ${dev.address} (bound=${device?.address})")
+            if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                peers.remove(dev.address)
                 if (dev.address == device?.address) {
                     device = null
                     mtu = DEFAULT_MTU
                     notifying = false
-                    try {
-                        controller?.callAttr("on_disconnect")
-                    } catch (e: Exception) {
-                        Log.w(TAG, "on_disconnect failed", e)
-                    }
+                    pendingWrites.clear()
+                    notifyLatch?.countDown()
+                    try { controller?.callAttr("on_disconnect") }
+                    catch (_: Exception) { Log.w(TAG, "on_disconnect failed") }
                 }
+            }
+        }
+
+        private fun bind(dev: BluetoothDevice): Boolean = synchronized(pendingWrites) {
+            if (!is_open() || (device != null && device?.address != dev.address)) false
+            else {
+                device = dev
+                mtu = peers[dev.address] ?: DEFAULT_MTU
+                true
             }
         }
 
@@ -287,25 +319,16 @@ class BleTransport {
             dev: BluetoothDevice, requestId: Int, characteristic: BluetoothGattCharacteristic,
             preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray,
         ) {
-            if (responseNeeded) {
-                gattServer?.sendResponse(dev, requestId, BluetoothGatt.GATT_SUCCESS, offset, null)
-            }
-            if (characteristic.uuid == RX_UUID) {
-                if (device == null) {
-                    device = dev
-                    Log.i(TAG, "setup peer bound: ${dev.address}")
-                }
+            val accepted = characteristic.uuid == RX_UUID && !preparedWrite && offset == 0 &&
+                value.size in 1..512 && pendingWrites.size < 64 && bind(dev)
+            if (responseNeeded) gattServer?.sendResponse(dev, requestId,
+                if (accepted) BluetoothGatt.GATT_SUCCESS else BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED, offset, null)
+            if (!accepted) return
+            synchronized(pendingWrites) {
                 val ctrl = controller
-                if (ctrl == null) {
-                    pendingWrites.add(value)
-                    Log.i(TAG, "queued ${value.size}B pre-attach write")
-                } else {
-                    try {
-                        ctrl.callAttr("on_write", value)
-                    } catch (e: Exception) {
-                        Log.w(TAG, "on_write failed", e)
-                    }
-                }
+                if (ctrl == null) pendingWrites.add(value.copyOf())
+                else try { ctrl.callAttr("on_write", value) }
+                catch (_: Exception) { Log.w(TAG, "on_write failed") }
             }
         }
 
@@ -313,31 +336,32 @@ class BleTransport {
             dev: BluetoothDevice, requestId: Int, offset: Int,
             characteristic: BluetoothGattCharacteristic,
         ) {
-            val value = characteristic.value ?: ByteArray(0)
-            gattServer?.sendResponse(dev, requestId, BluetoothGatt.GATT_SUCCESS, offset, value)
+            // Pairing replies are notifications, never readable by another peer.
+            gattServer?.sendResponse(dev, requestId, BluetoothGatt.GATT_READ_NOT_PERMITTED, offset, null)
         }
 
         override fun onDescriptorWriteRequest(
             dev: BluetoothDevice, requestId: Int, descriptor: BluetoothGattDescriptor,
             preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray,
         ) {
-            if (descriptor.uuid == CCCD_UUID) {
-                notifying = value.contentEquals(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-                Log.i(TAG, "notifications ${if (notifying) "enabled" else "disabled"}")
-            }
-            if (responseNeeded) {
-                gattServer?.sendResponse(dev, requestId, BluetoothGatt.GATT_SUCCESS, offset, null)
-            }
+            val enabled = value.contentEquals(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+            val disabled = value.contentEquals(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE)
+            val accepted = descriptor.uuid == CCCD_UUID && !preparedWrite && offset == 0 &&
+                (enabled || disabled) && bind(dev)
+            if (accepted) notifying = enabled
+            if (responseNeeded) gattServer?.sendResponse(dev, requestId,
+                if (accepted) BluetoothGatt.GATT_SUCCESS else BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED, offset, null)
         }
 
         override fun onNotificationSent(dev: BluetoothDevice, status: Int) {
+            if (dev.address != device?.address) return
             lastNotifyStatus = status
             notifyLatch?.countDown()
         }
 
         override fun onMtuChanged(dev: BluetoothDevice, mtuValue: Int) {
-            mtu = mtuValue
-            Log.i(TAG, "ATT MTU $mtuValue")
+            if (peers.size < 32 || peers.containsKey(dev.address)) peers[dev.address] = mtuValue.coerceIn(23, 517)
+            if (dev.address == device?.address) mtu = mtuValue.coerceIn(23, 517)
         }
     }
 }

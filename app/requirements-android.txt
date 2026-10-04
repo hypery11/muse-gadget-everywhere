@@ -1,0 +1,18 @@
+# Runtime versions verified by Chaquopy's four-ABI resolver.
+cryptography==42.0.8
+websockets==17.2
+pychromecast==14.0.10
+paho-mqtt==2.1.0
+requests==2.34.2
+zeroconf==0.149.16
+casttube==0.2.1
+protobuf==7.36.2
+cffi==1.17.1
+chaquopy-libffi==3.3
+async-timeout==5.0.1
+ifaddr==0.2.0
+pycparser==3.0
+charset-normalizer==3.5.2
+idna==3.20
+urllib3==2.8.0
+certifi==2026.7.22

@@ -8,6 +8,8 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.EditText
+import android.text.InputType
 import com.chaquo.python.Python
 import java.io.File
 
@@ -19,8 +21,10 @@ class PairActivity : Activity() {
     private lateinit var cancelButton: Button
     private lateinit var tokenValue: TextView
     private lateinit var tokenDot: View
+    private lateinit var continueButton: Button
     private var transport: BleTransport? = null
     @Volatile private var pairing = false
+    @Volatile private var closed = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +41,13 @@ class PairActivity : Activity() {
             },
         )
 
+        content.addView(Ui.bodyText(this, 15f).apply { text = getString(R.string.pair_intro) })
+        if (File(filesDir, "musegadget/pairing.json").isFile) {
+            content.addView(Ui.bodyText(this, 15f).apply { text = getString(R.string.pair_already) })
+            content.addView(controlsButton())
+        }
+        content.addView(Ui.sectionTitle(this, getString(R.string.pair_step_token)))
+        content.addView(Ui.bodyText(this, 15f).apply { text = getString(R.string.pair_token_help) })
         // Token state card: users see BEFORE tapping whether the import
         // file is staged, instead of learning it from an error.
         val tokenCard = Ui.card(this)
@@ -49,8 +60,29 @@ class PairActivity : Activity() {
         tokenValue = valueView
         tokenCard.addView(tokenRow)
         content.addView(tokenCard)
+        val input = Ui.field(this, getString(R.string.pair_token_input)).apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            if (android.os.Build.VERSION.SDK_INT >= 26) importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
+        }
+        tokenCard.addView(input)
+        tokenCard.addView(Ui.secondaryButton(this, getString(R.string.pair_save_token)).apply {
+            setOnClickListener {
+                val token = input.text.toString()
+                isEnabled = false
+                Thread {
+                    try {
+                        Startup.ensurePython(applicationContext)
+                        Python.getInstance().getModule("androidtv.pairing").callAttr("save_sdk_token", filesDir.absolutePath, token)
+                        runOnUiThread { input.text.clear(); updateTokenRow(); status.text = getString(R.string.pair_token_saved_local) }
+                    } catch (_: Exception) { setStatus(getString(R.string.pair_invalid_token)) }
+                    finally { runOnUiThread { isEnabled = true } }
+                }.start()
+            }
+        })
         updateTokenRow()
 
+        content.addView(Ui.sectionTitle(this, getString(R.string.pair_step_phone)))
+        content.addView(Ui.bodyText(this, 15f).apply { text = getString(R.string.pair_phone_help) })
         val statusCard = Ui.card(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -64,33 +96,17 @@ class PairActivity : Activity() {
         content.addView(statusCard)
 
         startButton = Ui.primaryButton(this, getString(R.string.pair_open_setup)).apply {
-            setOnClickListener { startPairing() }
+            setOnClickListener { if (ensurePermissions()) startPairing() }
         }
         cancelButton = Ui.secondaryButton(this, getString(R.string.pair_cancel)).apply {
             setOnClickListener { finish() }
         }
-        content.addView(
-            LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                ).apply { topMargin = Ui.run { this@PairActivity.dp(18) } }
-                val gap = Ui.run { this@PairActivity.dp(10) }
-                listOf(startButton, cancelButton).forEach {
-                    it.layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                    ).apply { marginEnd = gap }
-                    addView(it)
-                }
-            },
-        )
+        content.addView(Ui.actions(this, startButton, cancelButton))
+        continueButton = controlsButton().apply { visibility = View.GONE }
+        content.addView(continueButton)
 
         setContentView(scroll)
         startButton.requestFocus()
-        ensurePermissions()
     }
 
     /** Refresh the token row from the import file. Cheap; call on show
@@ -98,7 +114,7 @@ class PairActivity : Activity() {
     private fun updateTokenRow() {
         val staged = try {
             val dir = getExternalFilesDir("import")
-            dir != null && File(dir, "muse_token.txt").let { it.exists() && it.readText().isNotBlank() }
+            File(filesDir, "musegadget/sdk_token").isFile || (dir != null && File(dir, "muse_token.txt").let { it.isFile && it.length() in 1..4096 })
         } catch (_: Exception) {
             false
         }
@@ -115,12 +131,22 @@ class PairActivity : Activity() {
         }
     }
 
-    private fun ensurePermissions() {
+    private fun controlsButton(): Button = Ui.primaryButton(this, getString(R.string.pair_start_controls)).apply {
+        setOnClickListener {
+            GadgetService.start(this@PairActivity)
+            startActivity(android.content.Intent(this@PairActivity, ControlActivity::class.java).addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP))
+            finish()
+        }
+    }
+
+    private fun ensurePermissions(): Boolean {
         val missing = Startup.missingBlePermissions(this)
         if (missing.isNotEmpty()) {
             startButton.isEnabled = false
             requestPermissions(missing.toTypedArray(), 1)
+            return false
         }
+        return true
     }
 
     override fun onRequestPermissionsResult(
@@ -129,12 +155,13 @@ class PairActivity : Activity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         val granted = grantResults.isNotEmpty() &&
             grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-        startButton.isEnabled = granted
-        if (!granted) status.text = getString(R.string.pair_perm_denied)
+        startButton.isEnabled = true
+        if (granted) startPairing()
+        else status.text = getString(R.string.pair_retry_permissions)
     }
 
     private fun setStatus(text: String) {
-        runOnUiThread { status.text = text }
+        runOnUiThread { if (!closed) status.text = text }
     }
 
     /** Non-null when BLE peripheral mode can't work; the text says why. */
@@ -171,40 +198,17 @@ class PairActivity : Activity() {
             val py = Python.getInstance()
             val filesDir = filesDir.absolutePath
 
-            // SDK token: adb push it to the import dir, no permission needed:
-            // /sdcard/Android/data/ai.muse.gadgeteverywhere/files/import/muse_token.txt
-            var sdkToken: String? = null
-            val importDir = getExternalFilesDir("import")
-            if (importDir == null) {
-                setStatus(getString(R.string.pair_no_storage))
-                pairing = false
-                runOnUiThread { startButton.visibility = View.VISIBLE }
-                return
+            val module = py.getModule("androidtv.pairing")
+            val importFile = getExternalFilesDir("import")?.let { File(it, "muse_token.txt") }
+            if (importFile?.isFile == true) {
+                require(importFile.length() <= 4096) { "SDK token import is too large" }
+                module.callAttr("save_sdk_token", filesDir, importFile.readText())
+                check(importFile.delete()) { "Could not remove imported token" }
             }
-            val importFile = File(importDir, "muse_token.txt")
-            if (importFile.exists()) {
-                val token = importFile.readText().trim()
-                if (token.isNotEmpty()) {
-                    try {
-                        py.getModule("androidtv.pairing")
-                            .callAttr("save_sdk_token", filesDir, token)
-                    } catch (e: Exception) {
-                        setStatus(getString(R.string.pair_bad_token, importFile.absolutePath, e.message ?: e.javaClass.simpleName))
-                        pairing = false
-                        runOnUiThread { startButton.visibility = View.VISIBLE }
-                        return
-                    }
-                    sdkToken = token
-                    setStatus(getString(R.string.pair_token_saved))
-                }
-            }
+            val sdkToken = module.callAttr("get_sdk_token", filesDir)?.toJava(String::class.java)
+                ?: throw IllegalStateException("Save an SDK token before opening setup")
             runOnUiThread { updateTokenRow() }
-            if (sdkToken == null) {
-                setStatus(getString(R.string.pair_no_token, importFile.absolutePath))
-                pairing = false
-                runOnUiThread { startButton.visibility = View.VISIBLE }
-                return
-            }
+            if (closed) return
 
             val bleName = py.getModule("androidtv.pairing")
                 .callAttr("get_ble_name", filesDir)
@@ -220,12 +224,15 @@ class PairActivity : Activity() {
                 return
             }
             val transport = BleTransport().also { this.transport = it }
+            if (closed) return
             transport.open(this, bleName)
+            if (closed) { transport.shutdown(); return }
             val recordName = transport.adapterName(this)
             setStatus(getString(R.string.pair_setup_open, bleName, recordName))
             val paired = py.getModule("androidtv.pairing")
                 .callAttr("run_pairing", transport, filesDir, sdkToken, 600)
                 .toJava(Boolean::class.java)
+            if (paired) runOnUiThread { if (!closed) continueButton.visibility = View.VISIBLE }
             setStatus(
                 if (paired) getString(R.string.pair_paired)
                 else getString(R.string.pair_window_closed),
@@ -239,10 +246,12 @@ class PairActivity : Activity() {
             } catch (_: Exception) {
             }
             transport = null
+            runOnUiThread { if (!closed) startButton.visibility = View.VISIBLE }
         }
     }
 
     override fun onDestroy() {
+        closed = true
         try {
             transport?.shutdown()
         } catch (_: Exception) {

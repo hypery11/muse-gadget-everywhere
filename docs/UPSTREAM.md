@@ -15,9 +15,12 @@ Then verify, in order, before committing the bump:
 
 1. `./gradlew :app:assembleDebug` (Chaquopy pip still resolves).
 2. Overlay tests: `PYTHONPATH=vendor/muse-gadget-sdk/linux/src:app/src/main/python python3 -m pytest app/src/main/python/androidtv/tests/ -q`.
-3. On device: probe screen green, pair with the phone app, `system.run`
-   an `echo`, `file.read`/`file.write` roundtrip, `tv.launch` YouTube.
-4. Check `compat.py` against upstream `executor.py`: if upstream changed
+3. Run the isolated instrumentation suite and workspace roundtrip. Test actual
+   cloud registration separately; do not let test-runner shutdown interrupt a
+   production credential rotation. Pair with the phone app when needed.
+4. Verify default `system.run` denial, native media/card status and Cast actions.
+   Use trusted developer mode only when explicitly testing shell behavior.
+5. Check `compat.py` against upstream `executor.py`: if upstream changed
    `system_run` timeout/kill semantics or added file ops, mirror them.
 
 If upstream renames modules we import (`executor`, `service`, `pairing`,

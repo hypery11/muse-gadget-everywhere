@@ -25,7 +25,7 @@ class TvControl(private val context: Context) {
         // use; without it, say so instead of reporting a fake ok. The gate
         // applies to foreground callers too by design: one uniform
         // prerequisite, granted once at setup (see README TV setup step 5).
-        if (!android.provider.Settings.canDrawOverlays(context)) {
+        if (GadgetApplication.visibleActivity.get() == null && !android.provider.Settings.canDrawOverlays(context)) {
             return TvResult(
                 false,
                 "overlay permission missing; on the Probe screen tap Grant " +
@@ -38,11 +38,13 @@ class TvControl(private val context: Context) {
                 launchIntentForPackage(target)
                     ?: return TvResult(false, "no launch intent for package $target")
             } else {
-                Intent.parseUri(target, Intent.URI_INTENT_SCHEME)
+                val uri = android.net.Uri.parse(target)
+                require(uri.scheme in listOf("http", "https") && !uri.host.isNullOrBlank() && uri.userInfo == null) { "target must be an app package or HTTP(S) URL" }
+                Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE)
             }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
-            TvResult(true, "launched $target")
+            TvResult(true, "dispatched $target")
         } catch (e: Exception) {
             TvResult(false, "${e.javaClass.simpleName}: ${e.message}")
         }

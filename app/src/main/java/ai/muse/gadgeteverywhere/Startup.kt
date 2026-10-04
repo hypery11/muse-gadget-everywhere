@@ -28,7 +28,7 @@ object Startup {
         }
 
     /** Subset of [BLE_PERMISSIONS] the user hasn't granted yet. */
-    fun missingBlePermissions(activity: Activity): List<String> =
+    fun missingBlePermissions(activity: Context): List<String> =
         missingPermissions(activity, BLE_PERMISSIONS)
 
     /** Notification runtime permission (Android 13+). The foreground
@@ -42,7 +42,7 @@ object Startup {
         }
 
     /** Subset of [perms] the user hasn't granted yet (23+ API). */
-    fun missingPermissions(activity: Activity, perms: Array<String>): List<String> =
+    fun missingPermissions(activity: Context, perms: Array<String>): List<String> =
         perms.filter {
             activity.checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
         }

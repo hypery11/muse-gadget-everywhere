@@ -34,7 +34,11 @@ class ProbeActivity : Activity() {
         super.onCreate(savedInstanceState)
         val (scroll, content) = Ui.screenFrame(this)
 
-        content.addView(header())
+        content.addView(Ui.twoToneTitle(this, getString(R.string.diagnostics), "", 28f))
+        content.addView(Ui.bodyText(this, 15f).apply { text = getString(R.string.diagnostics_intro) })
+        content.addView(Ui.primaryButton(this, getString(R.string.probe_controls)).apply {
+            setOnClickListener { startActivity(Intent(this@ProbeActivity, ControlActivity::class.java)) }
+        })
         content.addView(actionsRow())
         content.addView(setupRow())
         deviceCard = section(content, getString(R.string.probe_section_device))
@@ -51,34 +55,7 @@ class ProbeActivity : Activity() {
         // Posted: requestFocus before first attach doesn't always stick.
         firstAction.post { firstAction.requestFocus() }
 
-        val missing = Startup.missingBlePermissions(this) +
-            Startup.missingPermissions(this, Startup.NOTIFICATION_PERMISSIONS)
-        if (missing.isNotEmpty()) requestPermissions(missing.toTypedArray(), 1)
         runProbe()
-    }
-
-    /** Two-tone brand title + version stamp. */
-    private fun header(): View {
-        val col = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(0, 0, 0, Ui.run { this@ProbeActivity.dp(18) })
-        }
-        col.addView(
-            Ui.twoToneTitle(
-                this,
-                getString(R.string.brand_title_a),
-                getString(R.string.brand_title_b),
-                30f,
-            ),
-        )
-        col.addView(
-            TextView(this).apply {
-                text = getString(R.string.probe_version, Ui.appVersion(this@ProbeActivity))
-                textSize = 14f
-                setTextColor(Ui.run { brand(R.color.ink_faint) })
-            },
-        )
-        return col
     }
 
     private fun cardMargin(): LinearLayout.LayoutParams =
@@ -107,72 +84,46 @@ class ProbeActivity : Activity() {
         }
         val resetButton = Ui.secondaryButton(this, getString(R.string.probe_reset)).apply {
             setOnClickListener {
+                android.app.AlertDialog.Builder(this@ProbeActivity).setTitle(R.string.probe_reset)
+                    .setMessage(R.string.reset_confirm).setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.probe_reset) { _, _ -> resetPairing() }.show()
+            }
+        }
+        val demoButton = Ui.secondaryButton(this, getString(R.string.probe_demo)).apply {
+            setOnClickListener { runDemo() }
+        }
+        firstAction = serviceButton
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(Ui.actions(this@ProbeActivity, serviceButton, pairButton))
+            addView(Ui.actions(this@ProbeActivity, resetButton, demoButton))
+        }
+    }
+
+    private fun resetPairing() {
                 GadgetService.stop(this@ProbeActivity)
+                Thread {
                 try {
                     Startup.ensurePython(this@ProbeActivity)
                     Python.getInstance().getModule("androidtv.pairing")
                         .callAttr("reset_pairing", filesDir.absolutePath)
-                    android.widget.Toast.makeText(
-                        this@ProbeActivity, getString(R.string.probe_reset_done),
-                        android.widget.Toast.LENGTH_LONG,
-                    ).show()
-                } catch (e: Exception) {
-                    android.widget.Toast.makeText(
-                        this@ProbeActivity,
-                        getString(R.string.probe_reset_failed, e.message ?: e.javaClass.simpleName),
-                        android.widget.Toast.LENGTH_LONG,
-                    ).show()
+                    runOnUiThread { android.widget.Toast.makeText(this, R.string.probe_reset_done, android.widget.Toast.LENGTH_LONG).show() }
+                } catch (_: Exception) {
+                    runOnUiThread { android.widget.Toast.makeText(this, R.string.service_error, android.widget.Toast.LENGTH_LONG).show() }
                 }
-            }
-        }
-        val demoButton = Ui.secondaryButton(this, getString(R.string.probe_demo)).apply {
-            setOnClickListener {
-                Thread {
-                    try {
-                        val out = Python.getInstance()
-                            .getModule("androidtv.probe")
-                            .callAttr("probe_demo", TvControl(this@ProbeActivity))
-                            .toString()
-                        runOnUiThread {
-                            pyBlock.text = getString(R.string.probe_demo_append, pyBlock.text, out)
-                        }
-                    } catch (e: Exception) {
-                        runOnUiThread {
-                            pyBlock.text = getString(
-                                R.string.probe_demo_failed, pyBlock.text,
-                                e.message ?: e.javaClass.simpleName,
-                            )
-                        }
-                    }
                 }.start()
+    }
+
+    private fun runDemo() {
+        Thread {
+            try {
+                Startup.ensurePython(this)
+                val out = Python.getInstance().getModule("androidtv.probe").callAttr("probe_demo", TvControl(this)).toString()
+                runOnUiThread { pyBlock.text = getString(R.string.probe_demo_append, pyBlock.text, out) }
+            } catch (e: Exception) {
+                runOnUiThread { pyBlock.text = getString(R.string.probe_demo_failed, pyBlock.text, e.javaClass.simpleName) }
             }
-        }
-        val row = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-            )
-            val gap = Ui.run { this@ProbeActivity.dp(10) }
-            listOf(serviceButton, pairButton, resetButton, demoButton).forEach {
-                it.layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                ).apply { marginEnd = gap }
-                addView(it)
-            }
-        }
-        val scroller = android.widget.HorizontalScrollView(this).apply {
-            isHorizontalScrollBarEnabled = false
-            addView(row)
-        }
-        // Centered content that overflows (narrow phones) would otherwise
-        // open mid-strip with the first buttons cut off; pin to the start.
-        // No-op when everything fits.
-        scroller.post { scroller.scrollTo(0, 0) }
-        firstAction = serviceButton
-        return scroller
+        }.start()
     }
 
     private fun setupRow(): View {
@@ -195,19 +146,7 @@ class ProbeActivity : Activity() {
                 openSettings(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
             }
         }
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            layoutParams = cardMargin()
-            val gap = Ui.run { this@ProbeActivity.dp(10) }
-            listOf(overlayButton, batteryButton).forEach {
-                it.layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                ).apply { marginEnd = gap }
-                addView(it)
-            }
-        }
+        return Ui.actions(this, overlayButton, batteryButton)
     }
 
     private fun footer(): View {

@@ -92,13 +92,18 @@ class _FakeMediaController:
     status = _FakeMediaStatus()
     played: list[tuple] = []
 
-    def play(self): pass
+    def __init__(self):
+        self.status = _FakeMediaStatus()
+        self.played = []
 
-    def pause(self): pass
+    def play(self): self.status.player_state = "PLAYING"
 
-    def stop(self): pass
+    def pause(self): self.status.player_state = "PAUSED"
+
+    def stop(self): self.status.player_state = "IDLE"
 
     def play_media(self, url, mime, **kw):
+        self.status.player_state = "PLAYING"
         self.played.append((url, mime, kw.get("stream_type")))
 
 
@@ -116,7 +121,7 @@ class _FakeCast:
 
     def wait(self, timeout=None): pass
 
-    def set_volume(self, level): pass
+    def set_volume(self, level): self.status.volume_level = level
 
     def quit_app(self):
         self.quit_calls = getattr(self, "quit_calls", 0) + 1
@@ -436,7 +441,7 @@ def test_reset_pairing_keeps_identity_and_token(monkeypatch, tmp_path) -> None:
 def test_file_roundtrip_in_process(tmp_path) -> None:
     import base64
 
-    target = tmp_path / "hello.txt"
+    target = tmp_path / "workspace" / "hello.txt"
     body = b"hello tv"
     ex = AndroidExecutor(android_account(str(tmp_path)))
     wrote = ex.file_op("write", {
@@ -455,6 +460,7 @@ def test_system_run_without_android_shell_is_a_clean_error(tmp_path) -> None:
     # /system/bin/sh exists only on device; anywhere else this must fail
     # loudly, never hang or traceback.
     ex = AndroidExecutor(android_account(str(tmp_path)))
+    ex.developer_enabled = lambda: True
     reply = ex.system_run({"command": "echo hi", "timeout_ms": 5000})
     import os
 

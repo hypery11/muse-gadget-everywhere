@@ -38,7 +38,9 @@ def reset_pairing(files_dir: str) -> None:
     configure(files_dir)
     from musegadget import config
 
-    config.delete_json(config.PAIRING_FILE)
+    from androidtv.cloud import PAIRING_LOCK
+    with PAIRING_LOCK:
+        config.delete_json(config.PAIRING_FILE)
 
 
 def save_sdk_token(files_dir: str, token: str) -> None:
@@ -57,7 +59,24 @@ def save_sdk_token(files_dir: str, token: str) -> None:
         )
     path = config.state_dir() / config.SDK_TOKEN_FILE
     config.state_dir().mkdir(mode=0o700, parents=True, exist_ok=True)
-    path.write_text(token, encoding="utf-8")
+    import os
+    import tempfile
+    fd, temporary = tempfile.mkstemp(prefix=".sdk-token-", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as output:
+            output.write(token)
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def get_sdk_token(files_dir: str) -> str | None:
+    configure(files_dir)
+    from musegadget import config
+    return config.sdk_token()
 
 
 class _TransportAdapter:
@@ -166,6 +185,7 @@ def run_pairing(transport, files_dir: str, sdk_token: str | None, timeout_s: int
         sdk_token=sdk_token,
     )
     completed = threading.Event()
+    native = transport
     transport = _TransportAdapter(transport)
     controller = SetupController(
         pairing=pairing,
@@ -183,7 +203,10 @@ def run_pairing(transport, files_dir: str, sdk_token: str | None, timeout_s: int
     controller.start()
     window.start()
     try:
-        completed.wait(timeout_s + 5)
+        deadline = time.monotonic() + timeout_s
+        while not completed.wait(0.2):
+            if not native.is_open() or time.monotonic() >= deadline:
+                break
     finally:
         window.cancel()
         if completed.is_set():

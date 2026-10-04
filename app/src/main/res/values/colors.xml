@@ -10,7 +10,7 @@
     <color name="accent_ink">#0A1626</color>
     <color name="ink">#F2F3F5</color>
     <color name="ink_dim">#9BA0AE</color>
-    <color name="ink_faint">#5C6170</color>
+    <color name="ink_faint">#9BA0AE</color>
     <color name="ok">#4ADE80</color>
     <color name="warn">#FBBF24</color>
     <color name="bad">#F87171</color>
