@@ -1,0 +1,48 @@
+name: Bug report
+description: Something doesn't work on your device
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill in what you can. "Doesn't work" with no device info will get
+        asked for device info — save us both a round trip.
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: e.g. Chromecast with Google TV 4K, Pixel 7, Fire TV Stick
+      placeholder: model name
+    validations:
+      required: true
+  - type: input
+    id: api
+    attributes:
+      label: Android version / API level
+      description: The probe screen shows this (android=… sdk=…), or adb shell getprop ro.build.version.sdk
+      placeholder: Android 12 (sdk 31)
+    validations:
+      required: true
+  - type: input
+    id: abi
+    attributes:
+      label: ABI
+      description: adb shell getprop ro.product.cpu.abi
+      placeholder: armeabi-v7a
+    validations:
+      required: false
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect
+      placeholder: Tapped Pair > Open setup; phone never sees the device. Expected a MuseGadgetXXXXXX entry.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: adb logcat excerpts. SCRUB tokens and pairing.json values first (see SECURITY.md).
+      render: shell
+    validations:
+      required: false

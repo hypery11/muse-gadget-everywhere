@@ -1,5 +1,10 @@
 # Muse Gadget TV
 
+[![release](https://img.shields.io/github/v/release/hypery11/muse-gadget-androidtv)](https://github.com/hypery11/muse-gadget-androidtv/releases)
+[![ci](https://github.com/hypery11/muse-gadget-androidtv/actions/workflows/ci.yml/badge.svg)](https://github.com/hypery11/muse-gadget-androidtv/actions)
+[![api](https://img.shields.io/badge/API-24%2B-brightgreen)](docs/COMPATIBILITY.md)
+[![license](https://img.shields.io/github/license/hypery11/muse-gadget-androidtv)](LICENSE)
+
 One APK that turns a retired **Chromecast with Google TV** (or any Android
 TV — or any Android phone/tablet, API 24+) into a complete Muse gadget.
 No root, no Termux.
@@ -11,6 +16,20 @@ any device; Cast-to-self wherever a Cast receiver runs).
 
 Compatibility matrix (what was proven, on which API/ABI, and how):
 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+
+## Quick start (no build needed)
+
+1. Grab `app-debug.apk` from the
+   [latest release](https://github.com/hypery11/muse-gadget-androidtv/releases).
+2. `adb install app-debug.apk`, open Muse Gadget, tap Grant overlay.
+3. Get a token at
+   [gadgets.muse.ai](https://gadgets.muse.ai/settings/sdk-tokens),
+   import it (Pairing step 2 below), tap Pair.
+4. In the Muse app: Settings > Devices > Add Device.
+
+Building from source is under Build. If something breaks, the
+Troubleshooting section is ordered by how often each thing actually
+went wrong during development.
 
 ## Status
 
@@ -68,6 +87,9 @@ vendor/muse-gadget-sdk/linux/src <- upstream musegadget, unmodified
 
 ## TV setup (first time)
 
+On a phone/tablet the same steps apply, except step 2 is plain USB
+debugging instead of wireless. Everything else is identical.
+
 1. Chromecast: Settings > System > About, click the build 7 times.
 2. Developer options > Wireless debugging > on > Pair with code.
 3. On your Mac: `adb pair <ip>:<pair-port>` (enter the TV code), then
@@ -75,7 +97,8 @@ vendor/muse-gadget-sdk/linux/src <- upstream musegadget, unmodified
 4. `./gradlew :app:assembleDebug` and
    `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
 5. Grant the overlay exemption so the background service may open apps:
-   `adb shell appops set ai.muse.gadgettv SYSTEM_ALERT_WINDOW allow`.
+   open Muse Gadget and tap Grant overlay (or once via adb:
+   `adb shell appops set ai.muse.gadgettv SYSTEM_ALERT_WINDOW allow`).
    Without it `tv.launch` fails with an actionable error instead of a
    silent no-op (Android 10+ blocks background activity starts). The
    gate is deliberately uniform: even the foreground Demo button
@@ -91,7 +114,7 @@ vendor/muse-gadget-sdk/linux/src <- upstream musegadget, unmodified
    `printf '%s' 'mgst_…' | adb shell \
 'cat > /sdcard/Android/data/ai.muse.gadgettv/files/import/muse_token.txt'`
    (use `printf`, not `echo -n`: some shells write a literal `-n`).
-3. Open Muse Gadget TV > Pair > Open setup (10-minute window).
+3. Open Muse Gadget > Pair > Open setup (10-minute window).
 4. Phone: Muse app, Settings > Devices, turn on Developer mode, Add Device.
 5. The TV shows the BLE name (`MuseGadgetXXXXXX`) and the actual on-air
    Bluetooth name (apps can't rename it — that needs a privileged API).
@@ -120,11 +143,12 @@ vendor/muse-gadget-sdk/linux/src <- upstream musegadget, unmodified
 - Service won't stay up: `adb logcat -b all | grep python.stderr` shows
   the Python log; `run-as ai.muse.gadgettv ls files/musegadget/` shows
   identity/pairing/token state (debug builds only).
-- `tv.launch` says overlay permission missing: run the appops command in
-  TV setup step 5.
-- Main screen buttons: Start service, Pair, Reset pairing, and Demo tv.*
+- `tv.launch` says overlay permission missing: tap Grant overlay on the
+  main screen (or the appops command in TV setup step 5).
+- Main screen buttons: Start service, Pair, Reset pairing, Demo tv.*
   (opens YouTube, then reads our own Cast status — the on-device
-  self-test for both tv commands; requires the overlay grant above).
+  self-test for both tv commands; requires the overlay grant above),
+  Grant overlay, Battery settings.
 - `tv.cast` actions: `status`, `play`, `pause`, `stop`, `volume`
   (`value` 0.0-1.0), `play_url` (`url` + optional `mime`/`stream`
   `BUFFERED` VOD default or `LIVE`); optional `host` overrides the
@@ -157,6 +181,14 @@ vendor/muse-gadget-sdk/linux/src <- upstream musegadget, unmodified
   and `_BytesBoundary` (RX `jarray` scalar reads are signed, so values
   are normalised to real `bytes` before upstream framing sees them).
 - `tv.*` commands: `tv.launch` (intents), `tv.cast` (Cast loopback to self).
+
+## New to Muse?
+
+You need the Muse phone app to pair. If you don't have it yet, join
+with my code and we both get 1B Muse tokens (redeem in Settings
+within 48 hours of joining):
+
+Code: `QDNUC3` — https://muse.ai/join
 
 ## License
 
