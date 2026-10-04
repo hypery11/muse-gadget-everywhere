@@ -1,204 +1,93 @@
 # Muse Gadget Everywhere
 
-[![release](https://img.shields.io/github/v/release/hypery11/muse-gadget-everywhere)](https://github.com/hypery11/muse-gadget-everywhere/releases)
-[![ci](https://github.com/hypery11/muse-gadget-everywhere/actions/workflows/ci.yml/badge.svg)](https://github.com/hypery11/muse-gadget-everywhere/actions)
-[![api](https://img.shields.io/badge/API-24%2B-brightgreen)](docs/COMPATIBILITY.md)
-[![license](https://img.shields.io/github/license/hypery11/muse-gadget-everywhere)](LICENSE)
+**Give your Chromecast a second job.** Turn an Android TV, phone or tablet into a device you can control with Muse: show a message, play media, speak aloud and run local scenes. No root. No Termux.
 
-One APK that turns a retired **Chromecast with Google TV** (or any Android
-TV — or any Android phone/tablet, API 24+) into a complete Muse gadget.
-No root, no Termux.
+[![Release](https://img.shields.io/github/v/release/hypery11/muse-gadget-everywhere?color=6eb4ff)](https://github.com/hypery11/muse-gadget-everywhere/releases/latest)
+[![Build](https://github.com/hypery11/muse-gadget-everywhere/actions/workflows/ci.yml/badge.svg)](https://github.com/hypery11/muse-gadget-everywhere/actions/workflows/ci.yml)
+[![Android](https://img.shields.io/badge/Android-7.0%2B-6eb4ff)](docs/COMPATIBILITY.md)
+[![License](https://img.shields.io/github/license/hypery11/muse-gadget-everywhere)](LICENSE)
 
-Upstream `musegadget` runs unmodified inside the app via
-[Chaquopy](https://chaquo.com/chaquopy/); this repo is a thin Android shell:
-BLE transport, foreground service, and `tv.*` commands (app launch on
-any device; Cast-to-self wherever a Cast receiver runs).
+[**Get started**](#quick-start) · [**繁體中文**](README.zh-TW.md) · [Commands](docs/FEATURES.md) · [Ask a question](https://github.com/hypery11/muse-gadget-everywhere/discussions)
 
-Compatibility matrix (what was proven, on which API/ABI, and how):
-[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+![Muse Gadget Everywhere running its new task-based control panel on a real Chromecast](docs/img/control-tv.png)
 
-## Quick start (no build needed)
+*Current 0.3 development UI on Chromecast with Google TV. The latest published APK is **0.2.0**; the features and interface below require a [source build](docs/BUILD.md) until 0.3 is released.*
 
-1. Grab `app-debug.apk` from the
-   [latest release](https://github.com/hypery11/muse-gadget-everywhere/releases).
-2. `adb install app-debug.apk`, open Muse Gadget Everywhere, tap Grant overlay.
-3. Get a token at
-   [gadgets.muse.ai](https://gadgets.muse.ai/settings/sdk-tokens),
-   import it (Pairing step 2 below), tap Pair.
-4. In the Muse app: Settings > Devices > Add Device.
+## Build an Android endpoint, keep the SDK upstream
 
-Building from source is under Build. If something breaks, the
-Troubleshooting section is ordered by how often each thing actually
-went wrong during development.
-
-## Status
-
-- [x] Probe: BLE advertising support plus Chaquopy import check, on one TV
-      screen. Verified on Chromecast with Google TV 4K (sabrina, Android 12).
-- [x] Service: foreground service (`:gadget` process) hosting the musegadget
-      run loop; boot restart once paired. Smoke-tested unpaired on device.
-- [x] Pairing: native BLE setup window for the Muse phone app (same UUIDs
-      and pairing v5 as upstream). Verified with a real iPhone pairing
-      (encrypted handshake through `provision_v2`, `pairing.json` saved).
-- [x] Commands: `tv.launch` verified (opens YouTube on screen);
-      `tv.cast` verified end to end (`play_url` reaches PLAYING on the
-      dongle itself; dead loads report errors, never fake "playing").
-      PyChromecast ships in the APK.
-- [x] Submission assets: photo set + Discord draft (`docs/DISCORD_POST.md`)
-      ready. Still yours: post it; optionally film the TV for video.
-- [x] Universal APK (v0.2.0): minSdk 24, all four ABIs, phone + Leanback
-      launchers. Proven on API 24/31/34/35 and armv7a/arm64 (full
-      phone-pairing proven on sabrina only; emulators prove install,
-      probe, service, and advertise-start); x86/x86_64 ship in the APK
-      (static-verified, no Intel host to boot).
-
-## Screenshots
-
-Main screen (probe green), pairing screen, YouTube opened by a Muse
-command, and the `device.health` / closed-loop `echo` replies that
-prove the link:
-
-![main screen](docs/img/01-main-probe.png)
-![pairing screen](docs/img/05-pair.png)
-![YouTube opened by tv.launch](docs/img/02-youtube-open.png)
-![device.health reply](docs/img/03-chat-health.png)
-![echo closed loop](docs/img/04-chat-echo.png)
-
-## Build
-
-Prerequisites: JDK 17, Android SDK (platform 35, build-tools 35),
-`python3.11` on PATH (Chaquopy build requirement; 3.11 is the newest
-Python with 32-bit Chaquopy support — and the newest that still covers
-all four ABIs).
-
-Verify with: `python3.11 --version && java -version && adb --version`.
+The interesting engineering boundary is small: **Kotlin owns Android hardware and lifecycle; Python owns command validation, scenes and integrations; the upstream SDK owns pairing and cloud transport.** Muse commands, local controls and scenes share one command catalog.
 
 ```sh
-git submodule update --init
-./gradlew :app:assembleDebug
+git clone --recurse-submodules https://github.com/hypery11/muse-gadget-everywhere.git
+cd muse-gadget-everywhere
+./gradlew :app:assembleDebug   # JDK 17, Android SDK 35, Python 3.11
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Upstream SDK lives in `vendor/muse-gadget-sdk` as a git submodule and is
-compiled straight into the APK — no fork, no copy:
+[Architecture & extension points](docs/ARCHITECTURE.md) · [Build prerequisites / modern runtime](docs/BUILD.md) · [Checks & first contributions](CONTRIBUTING.md)
 
-```
-app/src/main/python/androidtv/   <- our overlay (probe, service glue, tv.*)
-vendor/muse-gadget-sdk/linux/src <- upstream musegadget, unmodified
-```
+CI builds both universal and modern development APKs with checksums. Download artifacts from a successful [Actions run](https://github.com/hypery11/muse-gadget-everywhere/actions/workflows/ci.yml) while signed into GitHub; these are development builds, not production-signed releases.
 
-## TV setup (first time)
+## Put a spare device to work
 
-On a phone/tablet the same steps apply, except step 2 is plain USB
-debugging instead of wireless. Everything else is identical.
+| You want to… | Use it for… |
+| --- | --- |
+| Leave something on the TV | Message cards, images and buttons; spoken reminders with Android TTS |
+| Play something | Native audio/video, queues, subtitles and playback controls; choose another Cast receiver |
+| Run a small routine | Local scenes triggered manually, on a schedule or by an event while the service runs |
+| Give Muse eyes and ears | Visible, opt-in camera capture and push-to-talk; on-device Chinese OCR and barcode reading |
+| Connect your home | Optional Home Assistant states/events and MQTT; outgoing actions are opt-in |
 
-1. Chromecast: Settings > System > About, click the build 7 times.
-2. Developer options > Wireless debugging > on > Pair with code.
-3. On your Mac: `adb pair <ip>:<pair-port>` (enter the TV code), then
-   `adb connect <ip>:5555` and accept the prompt on the TV.
-4. `./gradlew :app:assembleDebug` and
-   `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
-5. Grant the overlay exemption so the background service may open apps:
-   open Muse Gadget Everywhere and tap Grant overlay (or once via adb:
-   `adb shell appops set ai.muse.gadgeteverywhere SYSTEM_ALERT_WINDOW allow`).
-   Without it `tv.launch` fails with an actionable error instead of a
-   silent no-op (Android 10+ blocks background activity starts). The
-   gate is deliberately uniform: even the foreground Demo button
-   requires it, so the self-test exercises the same path the service
-   uses at night with no foreground activity to hide behind.
+The app uses the **unmodified upstream Muse Gadget SDK** for pairing and cloud communication. The Android layer adds local controls and native hardware features. This is an independent community project, not an official Muse app.
 
-## Pairing
+## Quick start
 
-1. Get an SDK token at
-   [gadgets.muse.ai](https://gadgets.muse.ai/settings/sdk-tokens) and read
-   the [Gadget SDK Terms](https://gadgets.muse.ai/sdk-terms).
-2. Push it to the import dir (no permission needed):
-   `printf '%s' 'mgst_…' | adb shell \
-'cat > /sdcard/Android/data/ai.muse.gadgeteverywhere/files/import/muse_token.txt'`
-   (use `printf`, not `echo -n`: some shells write a literal `-n`).
-3. Open Muse Gadget Everywhere > Pair > Open setup (10-minute window).
-4. Phone: Muse app, Settings > Devices, turn on Developer mode, Add Device.
-5. The TV shows the BLE name (`MuseGadgetXXXXXX`) and the actual on-air
-   Bluetooth name (apps can't rename it — that needs a privileged API).
-   The Muse app found and paired us under the Chromecast's own name, so
-   no rename was needed; if your app filters by name, rename the
-   Chromecast to the BLE name in Settings > System > About > Device name.
+**For the current 0.3 experience:** [build and install the APK](docs/BUILD.md). **For the published 0.2 release:** [download `app-debug.apk`](https://github.com/hypery11/muse-gadget-everywhere/releases/download/v0.2.0/app-debug.apk); it has the earlier pairing/TV controls and UI. Published 0.2 is a development-signed APK.
 
-## Unpair / reset
+1. **Install on your Android device.** Android 7.0+ is the minimum. Use the universal build for Chromecast; devices with 16 KiB pages need the modern build. [Choose a build and connect ADB →](docs/GETTING_STARTED.md)
+2. **Try it locally.** Open the app → **Start service → Try a card → Show card**. A visible message is your first success; no Muse account is needed for this step.
+3. **Connect Muse when ready.** Home → **Pair with Muse**. Save an SDK token from [gadgets.muse.ai](https://gadgets.muse.ai/settings/sdk-tokens), open setup, then use the Muse phone app → Settings → Devices → Add Device. Pairing requires BLE peripheral support.
+4. **Start the service after pairing.** Wait for **Connected to your Muse**. Ask Muse to show a message on your device. [Pairing help →](docs/GETTING_STARTED.md#connect-muse)
 
-- On the TV: main screen > Reset pairing (stops the service, deletes
-  `pairing.json` only — identity and SDK token survive, like upstream
-  `unpair`, so the BLE name stays stable across re-pairs).
-- Or: `adb shell pm clear ai.muse.gadgeteverywhere` (also clears the token import).
+Remote commands that open screens/apps in the background also need Android overlay access: **Device → Diagnostics & setup → Grant overlay**. Camera, microphone and home integrations are optional.
 
-## Troubleshooting
+## See it working
 
-- `No SDK token found`: redo step 2 above; the Pair screen validates the
-  shape and tells you when the file is malformed.
-- `Bluetooth permission denied`: allow nearby-devices access, reopen Pair.
-- Phone can't find the device: keep it within a few meters; if the scan
-  filters by name, rename the Chromecast (see Pairing step 5).
-- `Bluetooth is off`: enable Bluetooth in Chromecast settings first.
-- Window closed without pairing: reopen it; check
-  `adb logcat | grep -i bletransport` for `queued … pre-attach write`,
-  `notify timeout`, or `setup peer bound` lines.
-- Service won't stay up: `adb logcat -b all | grep python.stderr` shows
-  the Python log; `run-as ai.muse.gadgeteverywhere ls files/musegadget/` shows
-  identity/pairing/token state (debug builds only).
-- `tv.launch` says overlay permission missing: tap Grant overlay on the
-  main screen (or the appops command in TV setup step 5).
-- Main screen buttons: Start service, Pair, Reset pairing, Demo tv.*
-  (opens YouTube, then reads our own Cast status — the on-device
-  self-test for both tv commands; requires the overlay grant above),
-  Grant overlay, Battery settings.
-- `tv.cast` actions: `status`, `play`, `pause`, `stop`, `volume`
-  (`value` 0.0-1.0), `play_url` (`url` + optional `mime`/`stream`
-  `BUFFERED` VOD default or `LIVE`); optional `host` overrides the
-  default (this dongle). `play_url` quits any lingering receiver
-  session first (a LOAD into one plays invisibly), retries once if the
-  first LOAD raced receiver boot, then verifies a real player state —
-  a dead load returns an error, never a fake "playing".
-- `tv.cast` stuck at IDLE on every URL: the on-board Cast receiver can
-  wedge after many launch/stop cycles; reboot the Chromecast (`adb
-  reboot`) and retry. Some hosts also refuse the receiver's fetch —
-  `https://www.w3schools.com/html/mov_bbb.mp4` is a known-good probe.
-- Video plays but screenshots/screen recordings show black: expected —
-  the receiver renders through a hardware composer overlay that capture
-  can't see. Film the physical TV for demo footage.
+![Local card demo captured from a Chromecast: display controls, a message on screen, and return to controls](docs/img/card-demo.gif)
 
-## How it works
+*Local control demonstration, recorded from the app. Cloud control was verified separately; this animation does not depict a Muse chat.*
 
-- `ProbeActivity` (0.1): reports BLE peripheral-mode support and proves
-  `musegadget` + `cryptography` import on-device.
-- `GadgetService` (0.2): foreground service hosting the asyncio run loop;
-  state in the app's files dir via `MUSEGADGET_STATE_DIR`.
-- Android sandbox: commands run as the app uid, and `compat.file_op`
-  refuses paths outside the state dir, so a prompt-injected absolute
-  path can't reach credentials or system files.
-- `BleTransport` (0.3): implements upstream's `Transport` protocol
-  over `BluetoothGattServer`, reusing `SetupController` unchanged — same
-  UUIDs, same pairing v5 crypto. Two Chaquopy lessons live in
-  `androidtv/pairing.py`: `_TransportAdapter` (Chaquopy can't convert a
-  Python list to `java.util.List`, so sends loop per-packet `send_packet`)
-  and `_BytesBoundary` (RX `jarray` scalar reads are signed, so values
-  are normalised to real `bytes` before upstream framing sees them).
-- `tv.*` commands: `tv.launch` (intents), `tv.cast` (Cast loopback to self).
+<img src="docs/img/control-phone.png" alt="Phone layout with bottom navigation and clear service status" width="280">
 
-## New to Muse?
+The TV uses a focusable side rail; phones use bottom navigation. Display, Media, Scenes and Device tools each have their own page. Inputs survive tab changes, command responses have a readable summary, and full details remain available.
 
-You need the Muse phone app to pair. If you don't have it yet, join
-with my code and we both get 1B Muse tokens (redeem in Settings
-within 48 hours of joining):
+## What is verified?
 
-Code: `QDNUC3` — https://muse.ai/join
+Real hardware testing centers on **Chromecast with Google TV (Android 12, 32-bit userspace)**. The native runtime was also tested on Android API 24 and 35 emulators, including a 16 KiB ARM64 image. This is not a claim that every Android device has been tested.
 
-## Contributing
+- Chromecast: BLE pairing, Muse cloud commands, Cast playback/pause/resume/stop, TTS, display cards and reboot reconnection.
+- Device/emulator regression: native media, OCR/barcodes, local scenes, lifecycle and UI navigation.
+- Still needs community testing: physical phones/tablets, real Home Assistant/MQTT installations and a 72-hour soak.
 
-PRs welcome — small ones merge fast. Three rules: don't touch
-`vendor/`, keep lint green, and prove device-specific behavior in
-`docs/COMPATIBILITY.md`. Details in
-[CONTRIBUTING.md](CONTRIBUTING.md).
+[Compatibility matrix](docs/COMPATIBILITY.md) · [Runtime evidence](docs/VALIDATION-2026-10-04.md) · [UI validation](docs/UI-UX-VALIDATION.md) · [Report your device](https://github.com/hypery11/muse-gadget-everywhere/issues/new?template=device_report.yml)
+
+The 0.3 upgrade restricts file commands to an app workspace and makes the trusted developer shell opt-in. Native cryptography dependency advisories remain open; see [security boundaries](docs/SECURITY.md) for the known limits.
+
+## Build, explore, contribute
+
+[Build instructions](docs/BUILD.md) · [Full command guide](docs/FEATURES.md) · [Troubleshooting](docs/GETTING_STARTED.md#troubleshooting) · [Roadmap](docs/ROADMAP.md)
+
+You can help without writing code: report a device, improve a setup step, translate a guide, or share a useful scene in [Discussions](https://github.com/hypery11/muse-gadget-everywhere/discussions). Developers can start with [CONTRIBUTING](CONTRIBUTING.md).
+
+If this gives one of your devices a useful second life, **star the repo** to keep it handy. A device report or a short demo helps the next person get started, too.
+
+<details>
+<summary>New to Muse?</summary>
+
+Cloud control needs a Muse account, phone app and SDK token; [Muse SDK terms](https://gadgets.muse.ai/sdk-terms) apply. Local controls can run without pairing. The maintainer’s optional referral code is `QDNUC3` at [muse.ai/join](https://muse.ai/join?invite_code=QDNUC3); referral benefits are governed by Muse’s current offer.
+
+</details>
 
 ## License
 
-Apache-2.0, matching upstream. Upstream third-party notices apply unchanged.
+[Apache-2.0](LICENSE). Upstream SDK and third-party notices are preserved; see [NOTICE](NOTICE) and [upstream integration](docs/UPSTREAM.md).

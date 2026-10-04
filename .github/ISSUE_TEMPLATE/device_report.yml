@@ -1,0 +1,59 @@
+name: Device compatibility report
+description: Tell others what worked on your TV, phone or tablet — no coding needed.
+title: "[Device] "
+labels: [device-report]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Successful and unsuccessful tests are both useful. Report only what you observed. Please omit identifiers, tokens, account details and private network addresses.
+  - type: input
+    id: device
+    attributes:
+      label: Device model and Android version
+      placeholder: Chromecast with Google TV 4K, Android 12 / API 31
+    validations:
+      required: true
+  - type: input
+    id: build
+    attributes:
+      label: App version / build / ABI / page size
+      placeholder: 0.3 source, universal, armeabi-v7a, 4096
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Test environment
+      options:
+        - Physical device
+        - Emulator
+    validations:
+      required: true
+  - type: checkboxes
+    id: tested
+    attributes:
+      label: What did you actually test?
+      options:
+        - label: Install and launch
+        - label: Remote / touch navigation
+        - label: Local display card
+        - label: BLE pairing with Muse phone app
+        - label: Muse cloud command with observed device response
+        - label: Native media or speech
+        - label: Cast receiver playback and controls
+        - label: Camera / OCR / barcode / microphone
+        - label: Home Assistant or MQTT on a real local setup
+        - label: Service restart / device reboot
+  - type: textarea
+    id: result
+    attributes:
+      label: Results and limitations
+      description: Say which checks passed or failed, how you observed them, and what you did not test.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Redacted evidence, if available
+      description: Screenshot, short log excerpt or reproduction steps. Do not expose private data.

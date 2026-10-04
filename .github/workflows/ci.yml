@@ -8,6 +8,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - python: "3.11"
+            modern: "false"
+            artifact: universal
+          - python: "3.13"
+            modern: "true"
+            artifact: modern
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,7 +30,7 @@ jobs:
       # Chaquopy builds against the exact minor on PATH.
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python }}
 
       # Runners already ship an SDK; just point at it and accept
       # licenses. (android-actions/setup-android is broken against
@@ -35,11 +44,33 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v3
 
-      - name: Lint (includes full 4-ABI compile)
-        run: ./gradlew :app:lintDebug --no-daemon
+      - name: Compile and lint Android runtime
+        run: ./gradlew -PmodernRuntime=${{ matrix.modern }} :app:assembleDebug :app:assembleDebugAndroidTest :app:assembleRelease :app:lintDebug --no-daemon
+
+      - name: Verify modern native alignment
+        if: matrix.modern == 'true'
+        run: python scripts/check_apk.py app/build/outputs/apk/debug/app-debug.apk --require-16k
+
+      - name: Package development APK and checksum
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk dist/muse-gadget-${{ matrix.artifact }}-debug.apk
+          cd dist
+          sha256sum *.apk > SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: muse-gadget-${{ matrix.artifact }}-debug
+          path: dist/
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Check documentation links
+        run: python scripts/check_docs.py
 
       - name: Python overlay tests
+        if: matrix.modern == 'false'
         run: |
-          python3.11 -m pip install -q pytest
+          python3.11 -m pip install -q pytest==8.3.4 cryptography==42.0.8 websockets==17.2 paho-mqtt==2.1.0
           PYTHONPATH=app/src/main/python:vendor/muse-gadget-sdk/linux/src \
-            python3.11 -m pytest app/src/main/python/androidtv/tests/ -q
+            python3.11 -m pytest app/src/main/python/androidtv/tests/ vendor/muse-gadget-sdk/linux/tests/ -q

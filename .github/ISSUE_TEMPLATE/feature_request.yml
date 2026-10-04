@@ -1,0 +1,31 @@
+name: Feature request
+description: Describe a useful task the project cannot handle yet.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: What are you trying to do?
+      description: Tell us the device, situation and outcome you need.
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: How do you handle it today?
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested behavior
+      description: Include any relevant hardware, permissions or offline requirements.
+    validations:
+      required: true
+  - type: dropdown
+    id: help
+    attributes:
+      label: Would you like to help?
+      options:
+        - I can test on my device
+        - I can help with documentation or design
+        - I may be able to implement it
+        - Sharing the idea for now

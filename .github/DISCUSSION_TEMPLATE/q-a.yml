@@ -1,0 +1,22 @@
+title: "Question: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask in English or 繁體中文. Please include enough context for someone with a different device to help. Keep tokens and pairing files private.
+  - type: input
+    id: setup
+    attributes:
+      label: Device / Android version / app version
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: What are you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried, and what happened?

@@ -1,11 +1,27 @@
 # Changelog
 
-## Unreleased
+## Unreleased — 0.3 development
 
-- Visual overhaul: dark brand world (two-tone title, cards, status
-  dots, amber/green prerequisite states), primary/secondary buttons
-  with TV focus rings, centered column on wide screens. Pair screen
-  shows SDK-token state before you tap.
+- Add native message cards, media playback/queues, TTS, visible voice/camera flows,
+  bundled OCR/barcodes, sensors, Cast discovery, local scenes, events and optional
+  Home Assistant/MQTT integration. See `docs/FEATURES.md` for exact behavior.
+- Replace the long controls list with Home, Display, Media, Scenes and Device
+  destinations: TV side navigation, compact bottom navigation, persistent drafts,
+  input validation, readable results and accessible focus states.
+- Guide token setup and pairing, offer controls after successful pairing,
+  confirm pairing/scene deletion, and group integration settings.
+- Preserve the unchanged upstream SDK while fixing graceful service restart,
+  BLE lifecycle, SDK-report deduplication and UUID event sessions.
+- Restrict file operations to the workspace; make the trusted developer shell
+  a local opt-in. Native cryptography advisories remain unresolved.
+- Add a modern Python 3.13 build for 64-bit/16 KiB devices alongside the
+  four-ABI Python 3.11 build required by 32-bit Chromecast userspace.
+- Add real device/emulator verification, native alignment checks and CI artifacts.
+- Refresh README visuals, add a Traditional Chinese guide, device/feature issue
+  forms, a conduct policy and a practical community launch pack.
+
+These source changes are not a published 0.3 release. Production signing,
+physical phone/tablet and integration coverage, and a 72-hour soak remain open.
 
 ## 0.2.0 — one APK for every Android device
 
@@ -27,9 +43,8 @@
   all UI strings extracted to resources.
 - Android 15 edge-to-edge insets, scrollable button row on narrow
   phones, no-shared-storage guard in the token import.
-- `lintDebug` clean: 0 errors, 0 NewApi (SDK-36/37 treadmill
-  warnings accepted in `lint-baseline.xml` — no emulator images
-  exist to verify a bump against).
+- `lintDebug` clean: 0 errors, 0 NewApi (newer-target warnings accepted in
+  `lint-baseline.xml`; newer target behavior was not validated).
 - Compatibility matrix with per-API/ABI proof: `docs/COMPATIBILITY.md`.
 
 ## 0.1.0 — Chromecast with Google TV

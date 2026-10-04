@@ -1,0 +1,27 @@
+title: "My device / scene: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Show what you made! English and 繁體中文 welcome. Please hide credentials, private chats and personal network details in photos or logs.
+  - type: input
+    id: device
+    attributes:
+      label: Device and app version
+      placeholder: Chromecast, Android 12, 0.3 source build
+  - type: textarea
+    id: use
+    attributes:
+      label: What does your device do now?
+      description: A short description, screenshot or video helps other people understand it.
+    validations:
+      required: true
+  - type: textarea
+    id: recipe
+    attributes:
+      label: How can someone reproduce it?
+      description: Include prerequisites, commands or scene configuration, and what you actually observed.
+  - type: textarea
+    id: limits
+    attributes:
+      label: Known limits or things you want help with

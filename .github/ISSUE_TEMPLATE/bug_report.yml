@@ -1,48 +1,47 @@
 name: Bug report
-description: Something doesn't work on your device
+description: Help us reproduce a problem with the app or runtime.
 labels: [bug]
 body:
   - type: markdown
     attributes:
       value: |
-        Fill in what you can. "Doesn't work" with no device info will get
-        asked for device info — save us both a round trip.
+        Thanks for testing! English and 繁體中文 are welcome. Please remove SDK tokens, pairing data and private chat content from attachments. Setup questions can go to Discussions.
   - type: input
-    id: device
+    id: version
     attributes:
-      label: Device
-      description: e.g. Chromecast with Google TV 4K, Pixel 7, Fire TV Stick
-      placeholder: model name
+      label: App version and build
+      placeholder: 0.3 source build, universal, commit SHA if known
     validations:
       required: true
   - type: input
-    id: api
+    id: device
     attributes:
-      label: Android version / API level
-      description: The probe screen shows this (android=… sdk=…), or adb shell getprop ro.build.version.sdk
-      placeholder: Android 12 (sdk 31)
+      label: Device and Android version
+      placeholder: Chromecast with Google TV 4K, Android 12 / API 31
     validations:
       required: true
   - type: input
     id: abi
     attributes:
-      label: ABI
-      description: adb shell getprop ro.product.cpu.abi
-      placeholder: armeabi-v7a
-    validations:
-      required: false
+      label: ABI and page size, if known
+      description: Optional — adb shell getprop ro.product.cpu.abi and adb shell getconf PAGE_SIZE
+      placeholder: armeabi-v7a, 4096
   - type: textarea
-    id: what
+    id: steps
     attributes:
-      label: What happened, and what did you expect
-      placeholder: Tapped Pair > Open setup; phone never sees the device. Expected a MuseGadgetXXXXXX entry.
+      label: Steps to reproduce
+      placeholder: "1. Open…\n2. Select…\n3. Observe…"
     validations:
       required: true
   - type: textarea
-    id: logs
+    id: outcome
     attributes:
-      label: Relevant logs
-      description: adb logcat excerpts. SCRUB tokens and pairing.json values first (see SECURITY.md).
-      render: shell
+      label: Expected and actual result
+      description: Include the exact error or status text if one appeared.
     validations:
-      required: false
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Redacted screenshot or relevant logs
+      description: Short excerpts are enough. Never upload pairing.json, SDK tokens or an entire unreviewed logcat.

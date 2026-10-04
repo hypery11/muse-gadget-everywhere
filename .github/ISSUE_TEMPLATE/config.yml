@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Question / discussion
+  - name: Setup help, ideas and scene sharing / 使用討論
     url: https://github.com/hypery11/muse-gadget-everywhere/discussions
-    about: Setup help, ideas, and "does it run on X?" go here, not in issues.
+    about: Ask a question or share how you use a device. English and 繁體中文 welcome.
+  - name: Getting started and troubleshooting
+    url: https://github.com/hypery11/muse-gadget-everywhere/blob/main/docs/GETTING_STARTED.md
+    about: Build choice, installation, pairing and common fixes.
+  - name: Private security reporting
+    url: https://github.com/hypery11/muse-gadget-everywhere/security/policy
+    about: Read the security policy before sharing a vulnerability or sensitive logs.
