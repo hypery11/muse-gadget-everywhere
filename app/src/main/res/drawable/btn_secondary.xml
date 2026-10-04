@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Secondary action: dark fill, hairline border. Focused state lifts the
+     border to full accent so TV focus is unmissable. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#33FFFFFF">
+    <item android:drawable="@drawable/btn_secondary_states" />
+</ripple>

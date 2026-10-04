@@ -5,14 +5,17 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.view.Gravity
+import android.view.View
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
 import com.chaquo.python.Python
 
@@ -24,27 +27,99 @@ import com.chaquo.python.Python
  */
 class ProbeActivity : Activity() {
 
-    private lateinit var output: TextView
+    private lateinit var pyBlock: TextView
+    private lateinit var deviceCard: LinearLayout
+    private lateinit var btCard: LinearLayout
+    private lateinit var prereqCard: LinearLayout
+    private lateinit var firstAction: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val (scroll, content) = Ui.screenFrame(this)
 
-        output = TextView(this).apply {
-            textSize = 18f
-            setPadding(48, 48, 48, 48)
+        content.addView(header())
+        content.addView(actionsRow())
+        content.addView(setupRow())
+        deviceCard = section(content, getString(R.string.probe_section_device))
+        btCard = section(content, getString(R.string.probe_section_bluetooth))
+        prereqCard = section(content, getString(R.string.probe_section_prereqs))
+        val pyCard = section(content, getString(R.string.probe_section_python))
+        pyBlock = Ui.monoBlock(this)
+        pyCard.addView(pyBlock)
+        content.addView(footer())
+
+        setContentView(scroll)
+
+        // TV d-pad starts somewhere visible; touch users never notice.
+        // Posted: requestFocus before first attach doesn't always stick.
+        firstAction.post { firstAction.requestFocus() }
+
+        val missing = Startup.missingBlePermissions(this) +
+            Startup.missingPermissions(this, Startup.NOTIFICATION_PERMISSIONS)
+        if (missing.isNotEmpty()) requestPermissions(missing.toTypedArray(), 1)
+        runProbe()
+    }
+
+    /** Two-tone brand title + version stamp. */
+    private fun header(): View {
+        val col = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 0, 0, Ui.run { this@ProbeActivity.dp(18) })
         }
-        val serviceButton = android.widget.Button(this).apply {
-            text = getString(R.string.probe_start_service)
+        val title = SpannableString(
+            "${getString(R.string.brand_title_a)} ${getString(R.string.brand_title_b)}",
+        )
+        val split = getString(R.string.brand_title_a).length
+        title.setSpan(
+            ForegroundColorSpan(Ui.run { brand(R.color.ink) }),
+            0, split, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        title.setSpan(
+            ForegroundColorSpan(Ui.run { brand(R.color.accent) }),
+            split + 1, title.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        col.addView(
+            TextView(this).apply {
+                text = title
+                textSize = 30f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            },
+        )
+        col.addView(
+            TextView(this).apply {
+                text = getString(R.string.probe_version, Ui.appVersion(this@ProbeActivity))
+                textSize = 14f
+                setTextColor(Ui.run { brand(R.color.ink_faint) })
+            },
+        )
+        return col
+    }
+
+    private fun cardMargin(): LinearLayout.LayoutParams =
+        LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+        ).apply {
+            topMargin = Ui.run { this@ProbeActivity.dp(10) }
+        }
+
+    private fun section(parent: LinearLayout, title: String): LinearLayout {
+        val card = Ui.card(this).apply { layoutParams = cardMargin() }
+        card.addView(Ui.sectionTitle(this, title))
+        parent.addView(card)
+        return card
+    }
+
+    private fun actionsRow(): View {
+        val serviceButton = Ui.primaryButton(this, getString(R.string.probe_start_service)).apply {
             setOnClickListener { GadgetService.start(this@ProbeActivity) }
         }
-        val pairButton = android.widget.Button(this).apply {
-            text = getString(R.string.probe_pair)
+        val pairButton = Ui.primaryButton(this, getString(R.string.probe_pair)).apply {
             setOnClickListener {
-                startActivity(android.content.Intent(this@ProbeActivity, PairActivity::class.java))
+                startActivity(Intent(this@ProbeActivity, PairActivity::class.java))
             }
         }
-        val resetButton = android.widget.Button(this).apply {
-            text = getString(R.string.probe_reset)
+        val resetButton = Ui.secondaryButton(this, getString(R.string.probe_reset)).apply {
             setOnClickListener {
                 GadgetService.stop(this@ProbeActivity)
                 try {
@@ -64,8 +139,7 @@ class ProbeActivity : Activity() {
                 }
             }
         }
-        val demoButton = android.widget.Button(this).apply {
-            text = getString(R.string.probe_demo)
+        val demoButton = Ui.secondaryButton(this, getString(R.string.probe_demo)).apply {
             setOnClickListener {
                 Thread {
                     try {
@@ -74,18 +148,49 @@ class ProbeActivity : Activity() {
                             .callAttr("probe_demo", TvControl(this@ProbeActivity))
                             .toString()
                         runOnUiThread {
-                            output.text = getString(R.string.probe_demo_append, output.text, out)
+                            pyBlock.text = getString(R.string.probe_demo_append, pyBlock.text, out)
                         }
                     } catch (e: Exception) {
                         runOnUiThread {
-                            output.text = getString(R.string.probe_demo_failed, output.text, e.message ?: e.javaClass.simpleName)
+                            pyBlock.text = getString(
+                                R.string.probe_demo_failed, pyBlock.text,
+                                e.message ?: e.javaClass.simpleName,
+                            )
                         }
                     }
                 }.start()
             }
         }
-        val overlayButton = android.widget.Button(this).apply {
-            text = getString(R.string.probe_grant_overlay)
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            )
+            val gap = Ui.run { this@ProbeActivity.dp(10) }
+            listOf(serviceButton, pairButton, resetButton, demoButton).forEach {
+                it.layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { marginEnd = gap }
+                addView(it)
+            }
+        }
+        val scroller = android.widget.HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(row)
+        }
+        // Centered content that overflows (narrow phones) would otherwise
+        // open mid-strip with the first buttons cut off; pin to the start.
+        // No-op when everything fits.
+        scroller.post { scroller.scrollTo(0, 0) }
+        firstAction = serviceButton
+        return scroller
+    }
+
+    private fun setupRow(): View {
+        val overlayButton = Ui.secondaryButton(this, getString(R.string.probe_grant_overlay)).apply {
             setOnClickListener {
                 // tv.launch needs SYSTEM_ALERT_WINDOW (background-start
                 // exemption). No permission needed to open our own page.
@@ -97,56 +202,36 @@ class ProbeActivity : Activity() {
                 )
             }
         }
-        val batteryButton = android.widget.Button(this).apply {
-            text = getString(R.string.probe_battery)
+        val batteryButton = Ui.secondaryButton(this, getString(R.string.probe_battery)).apply {
             setOnClickListener {
                 // OEM task killers murder background services; the exemption
                 // list is the user's call, we just deep-link to it.
                 openSettings(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
             }
         }
-        val buttons = LinearLayout(this).apply {
+        return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            addView(serviceButton)
-            addView(pairButton)
-            addView(resetButton)
-            addView(demoButton)
+            layoutParams = cardMargin()
+            val gap = Ui.run { this@ProbeActivity.dp(10) }
+            listOf(overlayButton, batteryButton).forEach {
+                it.layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { marginEnd = gap }
+                addView(it)
+            }
         }
-        val setupButtons = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            addView(overlayButton)
-            addView(batteryButton)
-        }
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            // Android 15 edge-to-edge draws under the status bar; consume
-            // the inset as padding on every API level instead.
-            fitsSystemWindows = true
-            // Four wide buttons overflow narrow phones; scroll instead of
-            // wrapping mid-label ("DEM\nO\nTV.*").
-            addView(
-                android.widget.HorizontalScrollView(this@ProbeActivity).apply {
-                    addView(buttons)
-                },
-            )
-            addView(setupButtons)
-            addView(
-                ScrollView(this@ProbeActivity).apply { addView(output) },
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                ),
-            )
-        }
-        setContentView(layout)
+    }
 
-        val missing = Startup.missingBlePermissions(this) +
-            Startup.missingPermissions(this, Startup.NOTIFICATION_PERMISSIONS)
-        if (missing.isNotEmpty()) requestPermissions(missing.toTypedArray(), 1)
-        runProbe()
+    private fun footer(): View {
+        return TextView(this).apply {
+            text = packageName
+            textSize = 12f
+            gravity = Gravity.CENTER
+            setTextColor(Ui.run { brand(R.color.ink_faint) })
+            layoutParams = cardMargin()
+        }
     }
 
     /**
@@ -169,32 +254,104 @@ class ProbeActivity : Activity() {
         runProbe()
     }
 
+    /** Green dot = good, red = blocking, amber = needs attention, none = info. */
+    private fun toneForGood(ok: Boolean?): Int? = when (ok) {
+        true -> Ui.run { brand(R.color.ok) }
+        false -> Ui.run { brand(R.color.bad) }
+        null -> null
+    }
+
+    private fun toneForAttention(granted: Boolean?): Int? = when (granted) {
+        true -> Ui.run { brand(R.color.ok) }
+        false -> Ui.run { brand(R.color.warn) }
+        null -> null
+    }
+
     private fun runProbe() {
-        val lines = mutableListOf(
-            "model=${Build.MANUFACTURER} ${Build.MODEL}",
-            "android=${Build.VERSION.RELEASE} (sdk=${Build.VERSION.SDK_INT})",
+        // Device card (static info, no dots).
+        deviceCard.removeViews(1, deviceCard.childCount - 1)
+        deviceCard.addView(
+            Ui.statusRow(
+                this, "model", "${Build.MANUFACTURER} ${Build.MODEL}",
+            ).first,
         )
+        deviceCard.addView(
+            Ui.statusRow(
+                this, "android",
+                "${Build.VERSION.RELEASE} (sdk ${Build.VERSION.SDK_INT})",
+            ).first,
+        )
+
+        // Bluetooth card.
+        btCard.removeViews(1, btCard.childCount - 1)
         try {
             val adapter: BluetoothAdapter? =
                 (getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
-            lines += "bluetooth_enabled=${adapter?.isEnabled}"
-            lines += "ble_advertising_supported=${adapter?.isMultipleAdvertisementSupported}"
+            btCard.addView(
+                Ui.statusRow(
+                    this, "enabled", adapter?.isEnabled.toString(),
+                    toneForGood(adapter?.isEnabled),
+                ).first,
+            )
+            btCard.addView(
+                Ui.statusRow(
+                    this, "advertising",
+                    adapter?.isMultipleAdvertisementSupported.toString(),
+                    toneForGood(adapter?.isMultipleAdvertisementSupported),
+                ).first,
+            )
             // The flag above is advisory; a null advertiser is the real veto
             // (emulators, peripheral-less boxes). Pairing refuses on null.
-            lines += "ble_peripheral_ready=${adapter?.bluetoothLeAdvertiser != null}"
-            lines += "ble_offloaded_filtering=${adapter?.isOffloadedFilteringSupported}"
+            val peripheral = adapter?.bluetoothLeAdvertiser != null
+            btCard.addView(
+                Ui.statusRow(
+                    this, "peripheral ready", peripheral.toString(),
+                    toneForGood(if (adapter == null) null else peripheral),
+                ).first,
+            )
+            btCard.addView(
+                Ui.statusRow(
+                    this, "offloaded filtering",
+                    adapter?.isOffloadedFilteringSupported.toString(),
+                ).first,
+            )
         } catch (e: SecurityException) {
-            lines += "bluetooth=PERMISSION_DENIED (${e.message ?: e.javaClass.simpleName})"
+            btCard.addView(
+                Ui.statusRow(
+                    this, "bluetooth", "PERMISSION_DENIED",
+                    Ui.run { brand(R.color.bad) },
+                ).first,
+            )
         }
-        try {
-            lines += "overlay_granted=${Settings.canDrawOverlays(this)}"
-            val power = getSystemService(Context.POWER_SERVICE) as PowerManager
-            lines += "battery_unrestricted=${power.isIgnoringBatteryOptimizations(packageName)}"
-        } catch (e: Exception) {
-            lines += "prereqs=UNKNOWN (${e.javaClass.simpleName})"
-        }
-        output.text = getString(R.string.probe_starting_python, lines.joinToString("\n"))
 
+        // Prerequisites card.
+        prereqCard.removeViews(1, prereqCard.childCount - 1)
+        try {
+            val overlay = Settings.canDrawOverlays(this)
+            prereqCard.addView(
+                Ui.statusRow(
+                    this, "overlay granted", overlay.toString(),
+                    toneForAttention(overlay),
+                ).first,
+            )
+            val power = getSystemService(Context.POWER_SERVICE) as PowerManager
+            val battery = power.isIgnoringBatteryOptimizations(packageName)
+            prereqCard.addView(
+                Ui.statusRow(
+                    this, "battery unrestricted", battery.toString(),
+                    toneForAttention(battery),
+                ).first,
+            )
+        } catch (e: Exception) {
+            prereqCard.addView(
+                Ui.statusRow(
+                    this, "prerequisites", "UNKNOWN",
+                    Ui.run { brand(R.color.bad) },
+                ).first,
+            )
+        }
+
+        pyBlock.text = getString(R.string.probe_python_waiting)
         Thread {
             val pyLine = try {
                 Startup.ensurePython(this)
@@ -207,7 +364,7 @@ class ProbeActivity : Activity() {
                 "python: FAILED ${e.javaClass.simpleName}: ${e.message ?: getString(R.string.err_no_detail)}"
             }
             runOnUiThread {
-                output.text = getString(R.string.probe_output, lines.joinToString("\n"), pyLine)
+                pyBlock.text = pyLine
             }
         }.start()
     }

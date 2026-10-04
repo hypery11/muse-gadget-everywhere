@@ -2,12 +2,12 @@ package ai.muse.gadgeteverywhere
 
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
 import com.chaquo.python.Python
 import java.io.File
@@ -18,42 +18,101 @@ class PairActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var startButton: Button
     private lateinit var cancelButton: Button
+    private lateinit var tokenValue: TextView
+    private lateinit var tokenDot: View
     private var transport: BleTransport? = null
     @Volatile private var pairing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val (scroll, content) = Ui.screenFrame(this)
 
-        status = TextView(this).apply {
-            textSize = 20f
-            setPadding(48, 48, 48, 48)
-            text = getString(R.string.pair_ready)
-        }
-        startButton = Button(this).apply {
-            text = getString(R.string.pair_open_setup)
-            setOnClickListener { startPairing() }
-        }
-        cancelButton = Button(this).apply {
-            text = getString(R.string.pair_cancel)
-            setOnClickListener { finish() }
-        }
-        val buttons = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            addView(startButton)
-            addView(cancelButton)
-        }
-        setContentView(
-            LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                // See ProbeActivity: stay below the status bar on 35+.
-                fitsSystemWindows = true
-                addView(buttons)
-                addView(ScrollView(this@PairActivity).apply { addView(status) })
+        content.addView(
+            TextView(this).apply {
+                text = getString(R.string.pair_title)
+                textSize = 28f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                setTextColor(Ui.run { brand(R.color.ink) })
+                setPadding(0, 0, 0, Ui.run { this@PairActivity.dp(16) })
             },
         )
+
+        // Token state card: users see BEFORE tapping whether the import
+        // file is staged, instead of learning it from an error.
+        val tokenCard = Ui.card(this)
+        val (tokenRow, valueView) = Ui.statusRow(
+            this, getString(R.string.pair_token_label),
+            getString(R.string.pair_token_missing),
+            Ui.run { brand(R.color.warn) },
+        )
+        tokenDot = tokenRow.getChildAt(0)
+        tokenValue = valueView
+        tokenCard.addView(tokenRow)
+        content.addView(tokenCard)
+        updateTokenRow()
+
+        val statusCard = Ui.card(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = Ui.run { this@PairActivity.dp(12) } }
+        }
+        status = Ui.bodyText(this).apply {
+            text = getString(R.string.pair_ready)
+        }
+        statusCard.addView(status)
+        content.addView(statusCard)
+
+        startButton = Ui.primaryButton(this, getString(R.string.pair_open_setup)).apply {
+            setOnClickListener { startPairing() }
+        }
+        cancelButton = Ui.secondaryButton(this, getString(R.string.pair_cancel)).apply {
+            setOnClickListener { finish() }
+        }
+        content.addView(
+            LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { topMargin = Ui.run { this@PairActivity.dp(18) } }
+                val gap = Ui.run { this@PairActivity.dp(10) }
+                listOf(startButton, cancelButton).forEach {
+                    it.layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                    ).apply { marginEnd = gap }
+                    addView(it)
+                }
+            },
+        )
+
+        setContentView(scroll)
         startButton.requestFocus()
         ensurePermissions()
+    }
+
+    /** Refresh the token row from the import file. Cheap; call on show
+     *  and after any import attempt (users stage the file between taps). */
+    private fun updateTokenRow() {
+        val staged = try {
+            val dir = getExternalFilesDir("import")
+            dir != null && File(dir, "muse_token.txt").let { it.exists() && it.readText().isNotBlank() }
+        } catch (_: Exception) {
+            false
+        }
+        tokenValue.text = getString(
+            if (staged) R.string.pair_token_staged else R.string.pair_token_missing,
+        )
+        tokenDot.background = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.OVAL
+            setColor(
+                Ui.run {
+                    brand(if (staged) R.color.ok else R.color.warn)
+                },
+            )
+        }
     }
 
     private fun ensurePermissions() {
@@ -139,6 +198,7 @@ class PairActivity : Activity() {
                     setStatus(getString(R.string.pair_token_saved))
                 }
             }
+            runOnUiThread { updateTokenRow() }
             if (sdkToken == null) {
                 setStatus(getString(R.string.pair_no_token, importFile.absolutePath))
                 pairing = false

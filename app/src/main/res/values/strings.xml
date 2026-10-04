@@ -4,6 +4,10 @@
     <string name="err_no_detail">no detail</string>
 
     <!-- PairActivity: the one screen every user reads. -->
+    <string name="pair_title">Pair this device</string>
+    <string name="pair_token_label">SDK token</string>
+    <string name="pair_token_staged">imported</string>
+    <string name="pair_token_missing">not imported</string>
     <string name="pair_ready">Ready to pair.</string>
     <string name="pair_open_setup">Open setup (10 min)</string>
     <string name="pair_cancel">Cancel</string>
@@ -23,7 +27,16 @@
     <string name="pair_paired">Paired!\n\nStart the service from the main screen.</string>
     <string name="pair_window_closed">Window closed without pairing.</string>
 
+    <!-- Brand header (two-tone title). -->
+    <string name="brand_title_a">Muse Gadget</string>
+    <string name="brand_title_b">Everywhere</string>
+
     <!-- ProbeActivity: developer probe; labels still belong in resources. -->
+    <string name="probe_section_device">Device</string>
+    <string name="probe_section_bluetooth">Bluetooth</string>
+    <string name="probe_section_prereqs">Prerequisites</string>
+    <string name="probe_section_python">Python runtime</string>
+    <string name="probe_version">v%1$s</string>
     <string name="probe_start_service">Start service</string>
     <string name="probe_pair">Pair</string>
     <string name="probe_reset">Reset pairing</string>
@@ -35,8 +48,7 @@
     <string name="probe_reset_failed">Reset failed: %1$s</string>
     <string name="probe_demo_append">%1$s\n\ndemo: %2$s</string>
     <string name="probe_demo_failed">%1$s\n\ndemo FAILED: %2$s</string>
-    <string name="probe_starting_python">%1$s\n\nstarting python…</string>
-    <string name="probe_output">%1$s\n\n%2$s</string>
+    <string name="probe_python_waiting">starting python…</string>
 
     <!-- GadgetService notification. -->
     <string name="notif_channel">Muse Gadget Everywhere</string>

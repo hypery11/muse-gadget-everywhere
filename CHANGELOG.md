@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Visual overhaul: dark brand world (two-tone title, cards, status
+  dots, amber/green prerequisite states), primary/secondary buttons
+  with TV focus rings, centered column on wide screens. Pair screen
+  shows SDK-token state before you tap.
+
 ## 0.2.0 — one APK for every Android device
 
 - minSdk 28 → 24, targetSdk 34 → 35; all four ABIs ship

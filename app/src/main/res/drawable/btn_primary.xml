@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Primary action: accent fill, dark ink. Focused state must scream on TV:
+     d-pad users get no ripple, so the border does the talking. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#40000000">
+    <item android:drawable="@drawable/btn_primary_states" />
+</ripple>
