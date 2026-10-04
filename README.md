@@ -20,7 +20,18 @@ BLE transport, foreground service, and TV-specific commands.
       `tv.cast` verified end to end (`play_url` reaches PLAYING on the
       dongle itself; dead loads report errors, never fake "playing").
       PyChromecast ships in the APK.
-- [ ] Submission: demo video + Discord `#projects` post.
+- [x] Submission assets: photo set + Discord draft (`docs/DISCORD_POST.md`)
+      ready. Still yours: post it; optionally film the TV for video.
+
+## Screenshots
+
+Main screen (probe green), YouTube opened by a Muse command, and the
+`device.health` / closed-loop `echo` replies that prove the link:
+
+![main screen](docs/img/01-main-probe.png)
+![YouTube opened by tv.launch](docs/img/02-youtube-open.png)
+![device.health reply](docs/img/03-chat-health.png)
+![echo closed loop](docs/img/04-chat-echo.png)
 
 ## Build
 
