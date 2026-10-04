@@ -54,10 +54,12 @@ went wrong during development.
 
 ## Screenshots
 
-Main screen (probe green), YouTube opened by a Muse command, and the
-`device.health` / closed-loop `echo` replies that prove the link:
+Main screen (probe green), pairing screen, YouTube opened by a Muse
+command, and the `device.health` / closed-loop `echo` replies that
+prove the link:
 
 ![main screen](docs/img/01-main-probe.png)
+![pairing screen](docs/img/05-pair.png)
 ![YouTube opened by tv.launch](docs/img/02-youtube-open.png)
 ![device.health reply](docs/img/03-chat-health.png)
 ![echo closed loop](docs/img/04-chat-echo.png)
