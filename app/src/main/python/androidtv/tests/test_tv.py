@@ -308,16 +308,29 @@ def test_cast_play_url_quits_lingering_session_first(monkeypatch) -> None:
 
 
 def test_android_health_adds_model_and_temp(monkeypatch) -> None:
+    import builtins
+
     import androidtv.compat as compat_mod
 
     monkeypatch.setattr(compat_mod, "_android_temperature", lambda: 36.6)
+    # Deny /proc like Android (and macOS) do: the bridge must fill the
+    # uptime gap. Without this the test reads the host's real uptime on
+    # Linux and the bridge value never applies.
+    real_open = builtins.open
+
+    def no_proc(path, *args, **kwargs):
+        if str(path).startswith("/proc/"):
+            raise PermissionError(f"denied: {path}")
+        return real_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", no_proc)
     ex = AndroidExecutor(android_account("/tmp"), FakeTv())
     reply = ex.run("device.health", {})
     assert reply["ok"] is True, reply
     payload = reply["payload"]
     assert payload["model"] == "Fake TV / android 12 (sdk 31)"
     assert payload["temperature_c"] == 36.6
-    assert payload["uptime_s"] == 12345  # Mac has no /proc/uptime either
+    assert payload["uptime_s"] == 12345
     assert "version" in payload
 
 
