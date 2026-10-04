@@ -4,7 +4,8 @@
     <string name="err_no_detail">no detail</string>
 
     <!-- PairActivity: the one screen every user reads. -->
-    <string name="pair_title">Pair this device</string>
+    <string name="pair_title_a">Pair this</string>
+    <string name="pair_title_b">device</string>
     <string name="pair_token_label">SDK token</string>
     <string name="pair_token_staged">imported</string>
     <string name="pair_token_missing">not imported</string>

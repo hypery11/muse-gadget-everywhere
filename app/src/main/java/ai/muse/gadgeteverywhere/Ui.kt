@@ -3,8 +3,11 @@ package ai.muse.gadgeteverywhere
 import android.content.Context
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.view.Gravity
 import android.view.View
+import android.view.ViewTreeObserver
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -26,6 +29,24 @@ object Ui {
             setBackgroundResource(R.drawable.card)
             val pad = context.dp(20)
             setPadding(pad, context.dp(16), pad, context.dp(16))
+        }
+    }
+
+    /** Two-tone brand title: [a] in ink, [b] in accent. */
+    fun twoToneTitle(context: Context, a: String, b: String, sizeSp: Float): TextView {
+        val title = SpannableString("$a $b")
+        title.setSpan(
+            ForegroundColorSpan(context.brand(R.color.ink)),
+            0, a.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        title.setSpan(
+            ForegroundColorSpan(context.brand(R.color.accent)),
+            a.length + 1, title.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        return TextView(context).apply {
+            text = title
+            textSize = sizeSp
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
     }
 
@@ -138,7 +159,7 @@ object Ui {
     }
 
     /**
-     * Screen frame: a scrollable, edge-safe column capped at 920dp and
+     * Screen frame: a scrollable, edge-safe column capped at 620dp and
      * centered — full-bleed on phones, a composed column on a 1080p TV.
      * Returns the ScrollView (for setContentView) and the content column.
      */
@@ -167,6 +188,20 @@ object Ui {
             setBackgroundColor(context.brand(R.color.bg))
             addView(center)
         }
+        // Short screens (pair) sit centered instead of hugging the top;
+        // tall screens that scroll keep their top anchor untouched.
+        scroll.viewTreeObserver.addOnGlobalLayoutListener(
+            object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    scroll.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    val spare = scroll.height - center.height
+                    if (spare > 0) {
+                        val pad = spare / 2
+                        center.setPadding(0, pad, 0, pad)
+                    }
+                }
+            },
+        )
         return scroll to content
     }
 

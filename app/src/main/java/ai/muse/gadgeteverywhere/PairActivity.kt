@@ -2,7 +2,6 @@ package ai.muse.gadgeteverywhere
 
 import android.app.Activity
 import android.content.pm.PackageManager
-import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -28,11 +27,12 @@ class PairActivity : Activity() {
         val (scroll, content) = Ui.screenFrame(this)
 
         content.addView(
-            TextView(this).apply {
-                text = getString(R.string.pair_title)
-                textSize = 28f
-                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                setTextColor(Ui.run { brand(R.color.ink) })
+            Ui.twoToneTitle(
+                this,
+                getString(R.string.pair_title_a),
+                getString(R.string.pair_title_b),
+                28f,
+            ).apply {
                 setPadding(0, 0, 0, Ui.run { this@PairActivity.dp(16) })
             },
         )

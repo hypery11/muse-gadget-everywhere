@@ -5,14 +5,11 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
-import android.text.SpannableString
-import android.text.style.ForegroundColorSpan
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
@@ -66,24 +63,13 @@ class ProbeActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(0, 0, 0, Ui.run { this@ProbeActivity.dp(18) })
         }
-        val title = SpannableString(
-            "${getString(R.string.brand_title_a)} ${getString(R.string.brand_title_b)}",
-        )
-        val split = getString(R.string.brand_title_a).length
-        title.setSpan(
-            ForegroundColorSpan(Ui.run { brand(R.color.ink) }),
-            0, split, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE,
-        )
-        title.setSpan(
-            ForegroundColorSpan(Ui.run { brand(R.color.accent) }),
-            split + 1, title.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE,
-        )
         col.addView(
-            TextView(this).apply {
-                text = title
-                textSize = 30f
-                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            },
+            Ui.twoToneTitle(
+                this,
+                getString(R.string.brand_title_a),
+                getString(R.string.brand_title_b),
+                30f,
+            ),
         )
         col.addView(
             TextView(this).apply {
