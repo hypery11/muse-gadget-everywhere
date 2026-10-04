@@ -44,7 +44,7 @@ Local actions require the running service. A job being accepted does not prove p
 4. In the Muse phone app, open Settings → Devices, enable Developer mode if required, then Add Device.
 5. Select this device. The app shows both its Muse BLE name and the actual on-air Bluetooth name. On the tested Chromecast, the normal Chromecast name worked. If your phone app filters by name, rename the Android device to the shown `MuseGadget…` name and retry.
 6. When paired, select **Start service & open controls**. Wait for **Connected to your Muse**.
-7. In a Muse chat, ask: “Show a welcome message on my TV.” Confirm the card on the physical screen.
+7. In a Muse chat, ask: “Show a welcome message on this device.” Specify the paired device’s name if you have several. Confirm the card on its screen.
 
 For ADB-only setup, the legacy `muse_token.txt` import in the app’s external `files/import` directory is still supported. Open Pair once to create the directory. A successful import moves the token into private storage and removes the external file; keep credentials out of shell history.
 

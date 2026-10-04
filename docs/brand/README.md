@@ -1,9 +1,11 @@
-# Brand assets
+# Public brand assets
 
-The app keeps its near-black stage (`#101014`), blue action color (`#6EB4FF`) and native Android typography. The authored monoline mark and navigation symbols are geometric vectors, stored in Android drawable resources. UI screenshots must come from Android, not from this artwork.
+Muse Gadget Everywhere is an open-source runtime for programmable Android devices. The campaign line is **Muse, beyond the chat.** Android phones, tablets and TV are different hosts; functionality depends on hardware and permissions.
 
-`social-preview.html` is a fixed **1280 × 640 export composition**, not a responsive landing page. Serve the repository locally, open this file in Chromium at that viewport, wait for `document.fonts.ready`, and export to `docs/social-preview.png`. Its inset is the unmodified real Chromecast capture from `docs/img/control-tv.png`.
+The palette uses near-black `#101014`, blue `#6EB4FF` and white `#F2F3F5`. The app uses Android system typography. The geometric monoline mark is authored in the Android drawable resources.
 
-The display typeface is **Space Grotesk Bold** by Florian Karsten, downloaded from [the author’s repository](https://github.com/floriankarsten/space-grotesk/tree/master/fonts/woff2/static). Its [SIL Open Font License](OFL.txt) is included. The app itself continues to use Android’s system typeface for readable native controls.
+`social-preview.html` is a fixed 1280 × 640 export composition. Serve the repository locally, open it in Chromium at that viewport, wait for `document.fonts.ready`, and capture to `docs/social-preview.png`. It uses the reviewed UI captures in `docs/img/`; their provenance and hashes are in [the asset manifest](../img/assets.json). Visible labels identify form factors only: Phone, Tablet and TV. The phone and tablet captures are emulator layouts; TV is a Chromecast capture.
 
-The sharing image must stay under GitHub’s 1 MB limit. Updating the PNG in Git does not update the repository’s Social preview setting; upload it there separately.
+`launcher-banner.html` is a 960 × 540 export source, resized for the four existing Android banner density resources. The sharing image must remain below GitHub’s 1 MB upload limit. Committing it does not change the repository’s Social preview setting.
+
+Space Grotesk Bold is by Florian Karsten, from [the author’s repository](https://github.com/floriankarsten/space-grotesk/tree/master/fonts/woff2/static), with the included [SIL Open Font License](OFL.txt).

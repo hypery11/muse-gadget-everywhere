@@ -1,12 +1,12 @@
 # Muse Gadget Everywhere
 
-**讓閒置 Chromecast 多一份工作。** 把 Android TV、手機或平板變成 Muse 可以控制的裝置：顯示訊息、播放媒體、朗讀文字、執行本機場景。不需要 root 或 Termux。
+**把 Muse 的能力帶進 Android 裝置。** 這是一套開源執行環境，讓 Android 手機、平板與 TV 成為可程式化的 Muse 裝置：依硬體能力提供螢幕、影音、語音、相機與本機自動化，再用 Kotlin 與 Python 擴充用途。不需要 root 或 Termux。
 
 [English](README.md) · [安裝與配對](docs/GETTING_STARTED.md) · [指令指南](docs/FEATURES.md) · [討論區](https://github.com/hypery11/muse-gadget-everywhere/discussions)
 
-![Chromecast 實機上的新版 Muse 控制台](docs/img/control-tv.png)
+![Muse，走出聊天室：Android 開源執行環境與手機、平板、TV 介面](docs/social-preview.png)
 
-> 圖片與下列新功能來自 **0.3 開發中原始碼**。目前公開 APK 仍是 **0.2.0**，使用舊版介面，主要提供配對與 TV 控制。要體驗新版，請依[建置指南](docs/BUILD.md)自行編譯，或下載成功 CI run 的開發版產物；不要把舊版下載當成新版。
+> 圖片展示 **0.3 開發中原始碼**的手機、平板與 TV 版型，已測硬體請見下方驗證範圍。目前公開 APK 仍是 **0.2.0**，使用舊版介面，主要提供配對與 TV 控制。要體驗新版，請依[建置指南](docs/BUILD.md)自行編譯，或下載成功 CI run 的開發版產物。
 
 ## 給開源開發者的入口
 
@@ -26,7 +26,7 @@ cd muse-gadget-everywhere
 2. 開啟 App → **Start service → Try a card → Show card**。先看到訊息出現在螢幕上；這一步不必配對 Muse。
 3. 要遠端控制時，回首頁選 **Pair with Muse**。從 [gadgets.muse.ai](https://gadgets.muse.ai/settings/sdk-tokens) 取得 SDK token，儲存後開啟配對視窗。
 4. Muse 手機 App → Settings → Devices → Add Device，完成配對後選 **Start service & open controls**。
-5. 等待 **Connected to your Muse**，再請 Muse「在電視顯示歡迎訊息」。要從背景開啟畫面，需先到 **Device → Diagnostics & setup → Grant overlay** 授權。
+5. 等待 **Connected to your Muse**，再請 Muse「在這台裝置顯示歡迎訊息」，有多台時指定裝置名稱。要從背景開啟畫面，需先到 **Device → Diagnostics & setup → Grant overlay** 授權。
 
 App 目前使用英文介面，因此這份指南保留按鈕原文。完整操作與疑難排解見[入門指南](docs/GETTING_STARTED.md)。
 
@@ -48,9 +48,9 @@ TV 使用方向鍵側欄，手機使用底部導覽。五個分頁分開日常�
 
 實體手機／平板、真實 Home Assistant／MQTT 環境與 72 小時長時間測試仍需要補充。原生加密依賴的已知安全公告仍開放追蹤，詳見[安全邊界](docs/SECURITY.md)。
 
-[相容性](docs/COMPATIBILITY.md) · [執行期驗證紀錄](docs/VALIDATION-2026-10-04.md) · [UI 驗證](docs/UI-UX-VALIDATION.md) · [回報你的裝置](https://github.com/hypery11/muse-gadget-everywhere/issues/new?template=device_report.yml)
+[相容性](docs/COMPATIBILITY.md) · [驗證摘要](docs/VALIDATION-RESULTS.md) · [重現測試](docs/VALIDATION.md) · [回報你的裝置](https://github.com/hypery11/muse-gadget-everywhere/issues/new?template=device_report.yml)
 
-## 一起讓更多舊裝置派上用場
+## 一起擴充 Android 裝置的用途
 
 不會寫程式也能幫忙：回報裝置相容性、改善安裝步驟、分享場景或翻譯文件。歡迎在[討論區](https://github.com/hypery11/muse-gadget-everywhere/discussions)使用英文或繁體中文；程式貢獻請看 [CONTRIBUTING](CONTRIBUTING.md)。
 

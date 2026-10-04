@@ -1,6 +1,6 @@
 # Muse Gadget Everywhere
 
-**Give your Chromecast a second job.** Turn an Android TV, phone or tablet into a device you can control with Muse: show a message, play media, speak aloud and run local scenes. No root. No Termux.
+**Bring Muse to Android hardware.** An open-source runtime that turns Android phones, tablets and TVs into programmable Muse gadgets: display, media, voice, camera and local automation, according to each device’s capabilities. Build new uses with Kotlin and Python. No root. No Termux.
 
 [![Release](https://img.shields.io/github/v/release/hypery11/muse-gadget-everywhere?color=6eb4ff)](https://github.com/hypery11/muse-gadget-everywhere/releases/latest)
 [![Build](https://github.com/hypery11/muse-gadget-everywhere/actions/workflows/ci.yml/badge.svg)](https://github.com/hypery11/muse-gadget-everywhere/actions/workflows/ci.yml)
@@ -9,9 +9,9 @@
 
 [**Get started**](#quick-start) · [**繁體中文**](README.zh-TW.md) · [Commands](docs/FEATURES.md) · [Ask a question](https://github.com/hypery11/muse-gadget-everywhere/discussions)
 
-![Muse Gadget Everywhere running its new task-based control panel on a real Chromecast](docs/img/control-tv.png)
+![Muse, beyond the chat: an open-source Android runtime, illustrated with phone, tablet and TV layouts](docs/social-preview.png)
 
-*Current 0.3 development UI on Chromecast with Google TV. The latest published APK is **0.2.0**; the features and interface below require a 0.3 [source build](docs/BUILD.md) or development CI artifact until 0.3 is released.*
+*Phone, tablet and TV layouts from the 0.3 development UI; see [device validation](#what-is-verified) for tested hardware. The latest published APK is **0.2.0**; the features and interface below require a 0.3 [source build](docs/BUILD.md) or development CI artifact until 0.3 is released.*
 
 ## Build an Android endpoint, keep the SDK upstream
 
@@ -28,11 +28,11 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 CI builds both universal and modern development APKs with checksums. Download artifacts from a successful [Actions run](https://github.com/hypery11/muse-gadget-everywhere/actions/workflows/ci.yml) while signed into GitHub; these are development builds, not production-signed releases.
 
-## Put a spare device to work
+## Build around your device’s capabilities
 
 | You want to… | Use it for… |
 | --- | --- |
-| Leave something on the TV | Message cards, images and buttons; spoken reminders with Android TTS |
+| Give your device a voice and a display | Message cards, images and buttons; spoken reminders with Android TTS |
 | Play something | Native audio/video, queues, subtitles and playback controls; choose another Cast receiver |
 | Run a small routine | Local scenes triggered manually, on a schedule or by an event while the service runs |
 | Give Muse eyes and ears | Visible, opt-in camera capture and push-to-talk; on-device Chinese OCR and barcode reading |
@@ -69,7 +69,7 @@ Real hardware testing centers on **Chromecast with Google TV (Android 12, 32-bit
 - Device/emulator regression: native media, OCR/barcodes, local scenes, lifecycle and UI navigation.
 - Still needs community testing: physical phones/tablets, real Home Assistant/MQTT installations and a 72-hour soak.
 
-[Compatibility matrix](docs/COMPATIBILITY.md) · [Runtime evidence](docs/VALIDATION-2026-10-04.md) · [UI validation](docs/UI-UX-VALIDATION.md) · [Report your device](https://github.com/hypery11/muse-gadget-everywhere/issues/new?template=device_report.yml)
+[Compatibility matrix](docs/COMPATIBILITY.md) · [Validation summary](docs/VALIDATION-RESULTS.md) · [Reproduce the checks](docs/VALIDATION.md) · [Report your device](https://github.com/hypery11/muse-gadget-everywhere/issues/new?template=device_report.yml)
 
 The 0.3 upgrade restricts file commands to an app workspace and makes the trusted developer shell opt-in. Native cryptography dependency advisories remain open; see [security boundaries](docs/SECURITY.md) for the known limits.
 
@@ -79,12 +79,12 @@ The 0.3 upgrade restricts file commands to an app workspace and makes the truste
 
 You can help without writing code: report a device, improve a setup step, translate a guide, or share a useful scene in [Discussions](https://github.com/hypery11/muse-gadget-everywhere/discussions). Developers can start with [CONTRIBUTING](CONTRIBUTING.md).
 
-If this gives one of your devices a useful second life, **star the repo** to keep it handy. A device report or a short demo helps the next person get started, too.
+If this helps you build something with Android and Muse, **star the repo** to follow its development. A device report, extension or short demo helps the next person get started, too.
 
 <details>
 <summary>New to Muse?</summary>
 
-Cloud control needs a Muse account, phone app and SDK token; [Muse SDK terms](https://gadgets.muse.ai/sdk-terms) apply. Local controls can run without pairing. The maintainer’s optional referral code is `QDNUC3` at [muse.ai/join](https://muse.ai/join?invite_code=QDNUC3); referral benefits are governed by Muse’s current offer.
+Cloud control needs a Muse account, phone app and SDK token; [Muse SDK terms](https://gadgets.muse.ai/sdk-terms) apply. Local controls can run without pairing.
 
 </details>
 

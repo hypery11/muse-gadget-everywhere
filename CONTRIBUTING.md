@@ -31,6 +31,8 @@ python3 scripts/check_docs.py
 
 For device tests and cloud isolation, follow [VALIDATION.md](docs/VALIDATION.md). Do not run lifecycle stress tests against a live account: the normal instrumentation suite isolates cloud traffic. Cloud verification is separate and opt-in.
 
+Before sharing logs, screenshots or new files, follow the [public-content policy](docs/PUBLISHING.md). Run `python3 scripts/check_public.py` to catch private file classes and unreviewed documentation media. Review images visually and use synthetic test data; automated secret scanning cannot establish that a screenshot is free of private information.
+
 ## Project boundaries
 
 - Keep `vendor/muse-gadget-sdk` unmodified. Adapt Android behavior in `app/src/main/python/androidtv/` and the Kotlin shell; propose upstream fixes upstream.

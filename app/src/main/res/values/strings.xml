@@ -145,7 +145,7 @@
     <string name="home_try_help">Display a card on this screen. No Muse pairing needed; just start the service.</string>
     <string name="home_try_card">Try a card</string>
     <string name="home_cloud">Then, ask Muse</string>
-    <string name="home_cloud_help">Pair once to control this device from your Muse chat. Try “Show a welcome message on my TV.”</string>
+    <string name="home_cloud_help">Pair once to control this device from your Muse chat. Ask Muse to show a welcome message on this device; use its name if you have several.</string>
     <string name="home_stopped_help">Start the service to use local controls or connect to Muse. Your pairing and settings stay saved.</string>
     <string name="home_connected_help">Ready for commands from Muse. Local controls are available here, too.</string>
     <string name="home_unpaired_help">Local controls are ready. Pair with the Muse phone app when you want remote control.</string>

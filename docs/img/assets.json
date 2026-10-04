@@ -1,0 +1,37 @@
+{
+  "reviewed_at": "2026-10-05",
+  "app_version": "0.3 development",
+  "review_scope": "Visual review for private conversations, credentials, account/device identifiers and personal network details. This manifest records reviewed content, not blanket device compatibility.",
+  "assets": [
+    {
+      "path": "docs/img/control-tv.png",
+      "source": "Chromecast with Google TV, Android 12",
+      "kind": "physical-device screenshot",
+      "sha256": "075ce8374ea4511ea5325b46b5ffb41b8ac372b46bf01d3a8d4c8b91e071962f"
+    },
+    {
+      "path": "docs/img/control-phone.png",
+      "source": "API 35 ARM64 phone layout",
+      "kind": "emulator screenshot",
+      "sha256": "1da2f98d1abd5e278b8189bf718473ef779a2e26b823f13b561c3bb2cef7a4b3"
+    },
+    {
+      "path": "docs/img/control-tablet.png",
+      "source": "API 35 ARM64, resized tablet layout",
+      "kind": "emulator layout fixture",
+      "sha256": "af68ee85d5febb02883812031599bcd85cb6eac810ba85ca2d91f4dd9bb22ddc"
+    },
+    {
+      "path": "docs/img/card-demo.gif",
+      "source": "Chromecast with Google TV; local display controls, card and return",
+      "kind": "edited sequence of 3 physical-device stills; not cloud footage",
+      "sha256": "318914a0bef6737b5a9d4e02947c957761ead54f59585721b18661289b20a2d9"
+    },
+    {
+      "path": "docs/social-preview.png",
+      "source": "Composition of reviewed phone, tablet and TV captures",
+      "kind": "marketing artwork; source types documented above",
+      "sha256": "7a240ec35ba123acc9013a04be3218bc38bcc63d228cd79e2995302bfe79cc0f"
+    }
+  ]
+}

@@ -7,3 +7,41 @@ __pycache__/
 *.pyc
 
 .venv/
+
+# Local credentials, device state and signing material.
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.key
+*.pem
+pairing.json
+android-sdk-report.json
+sdk-token*
+muse-sdk-token*
+*storage-state*.json
+cookies*.json
+*.sqlite
+*.sqlite3
+*.db
+*.log
+*.jsonl
+
+# Internal working material is kept outside the public repository.
+.private/
+private/
+internal/
+docs/internal/
+docs/validation/
+docs/COMMUNITY-LAUNCH.md
+docs/DISCORD_POST.md
+docs/DEMO.md
+docs/FILM-PLAN*
+docs/growth-*.json
+docs/brand/motion-study*
+scripts/render_brand.mjs
+scripts/score_motion.py
+scripts/community_metrics.py

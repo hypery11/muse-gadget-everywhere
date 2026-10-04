@@ -1,14 +1,25 @@
 <!doctype html>
-<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Muse Gadget Everywhere — social preview artwork</title>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Muse Gadget Everywhere — Android platform preview</title>
 <style>
 @font-face{font-family:Space;src:url(SpaceGrotesk-Bold.woff2) format('woff2');font-weight:700;font-display:block}
 *{box-sizing:border-box}html,body{margin:0;background:#101014;color:#f2f3f5}body{width:1280px;height:640px;overflow:hidden;font-family:Space,sans-serif;font-weight:700}
-header{position:absolute;left:54px;top:45px;display:flex;align-items:center;gap:18px;font-size:26px;letter-spacing:-.02em}header svg{width:48px;height:48px;color:#6eb4ff}
-h1{position:absolute;top:159px;left:54px;margin:0;width:560px;font-size:66px;line-height:1.08;letter-spacing:-.035em}h1 span{color:#6eb4ff}.description{position:absolute;left:56px;top:400px;max-width:500px;font:22px/1.45 Space,sans-serif;color:#bfc4d0}
-figure{position:absolute;left:650px;top:171px;margin:0;width:576px}figure img{display:block;width:576px;height:324px;border:1px solid #3b4150;border-radius:12px}figcaption{font-size:14px;color:#bfc4d0;margin-top:12px}
-footer{position:absolute;left:54px;right:54px;bottom:40px;display:flex;justify-content:space-between;align-items:end;border-top:1px solid #3b4150;padding-top:23px;font-size:18px;color:#bfc4d0}footer strong{color:#6eb4ff;font-size:20px}
+header{position:absolute;left:54px;top:42px;display:flex;align-items:center;gap:16px;font-size:25px;letter-spacing:-.02em}header svg{width:46px;height:46px;color:#6eb4ff}
+h1{position:absolute;top:175px;left:54px;margin:0;font-size:70px;line-height:1.08;letter-spacing:-.035em}h1 span{color:#6eb4ff}.description{position:absolute;left:57px;top:343px;margin:0;font:25px/1.5 Space,sans-serif;color:#c5cada}.build{position:absolute;left:57px;top:447px;color:#6eb4ff;font-size:18px}
+figure{position:absolute;margin:0}figure img{width:100%;height:auto;display:block;border:1px solid #515a6c;border-radius:10px}figure figcaption{position:absolute;top:-25px;font-size:14px;color:#c5cada;white-space:nowrap}
+.tv{left:748px;top:166px;width:470px}.tablet{left:651px;top:315px;width:330px}.phone{left:1057px;top:241px;width:130px}.phone img{border-radius:16px}.tablet figcaption,.phone figcaption{top:auto;bottom:-25px}
+footer{position:absolute;left:54px;right:54px;bottom:30px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #3b4150;padding-top:20px;font-size:18px;color:#c5cada}footer strong{color:#f2f3f5}footer small{font-size:13px}
 </style>
 <header><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 44V16l12 12 12-16 12 16 12-12v28M20 54h24" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></svg>Muse Gadget Everywhere</header>
-<main><h1>Give your<br>Chromecast<br><span>a second job.</span></h1><p class="description">Message cards. Media. Local scenes.<br>Android devices, connected to Muse.</p><figure><img src="../img/control-tv.png" alt="Actual Chromecast running Muse Gadget Everywhere"><figcaption>Real Chromecast capture · 0.3 development UI</figcaption></figure></main>
-<footer><span>Android TV · Phones · Tablets</span><strong>No root. Open source.</strong></footer>
+<main>
+  <h1>Muse, beyond<br><span>the chat.</span></h1>
+  <p class="description">An open-source runtime<br>for Android devices.</p>
+  <p class="build">Build with Kotlin + Python.</p>
+  <figure class="tv"><img src="../img/control-tv.png" alt="Muse Gadget Everywhere TV controls"><figcaption>TV</figcaption></figure>
+  <figure class="tablet"><img src="../img/control-tablet.png" alt="Muse Gadget Everywhere tablet layout"><figcaption>Tablet</figcaption></figure>
+  <figure class="phone"><img src="../img/control-phone.png" alt="Muse Gadget Everywhere phone controls"><figcaption>Phone</figcaption></figure>
+</main>
+<footer><strong>Phones. Tablets. TV. Your next build.</strong><small>0.3 development UI · Features depend on hardware</small></footer>
 </html>
