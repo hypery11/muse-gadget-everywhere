@@ -1,0 +1,16 @@
+Muse Gadget TV
+Copyright 2026 the project contributors.
+
+This product bundles unmodified upstream open source:
+
+- muse-gadget-sdk (facebookincubator/muse-gadget-sdk, Apache-2.0,
+  Copyright Meta Platforms, Inc. and affiliates), included as a git
+  submodule under vendor/. Upstream third-party notices (minimp3 CC0-1.0,
+  Adafruit GFX BSD-2-Clause, ESP-IDF/LVGL/SDL build-time components)
+  apply as documented in the upstream README.
+- Chaquopy (Python SDK for Android, chaquo.com) to embed the Python
+  interpreter. Check its license for your use.
+- Python packages installed at build time: cryptography, websockets
+  (and PyChromecast once tv.cast is enabled). Each keeps its own license.
+
+The Apache License does not cover the Jollybot avatar (upstream).
