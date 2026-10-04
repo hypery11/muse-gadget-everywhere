@@ -11,7 +11,7 @@
 
 ![Muse Gadget Everywhere running its new task-based control panel on a real Chromecast](docs/img/control-tv.png)
 
-*Current 0.3 development UI on Chromecast with Google TV. The latest published APK is **0.2.0**; the features and interface below require a [source build](docs/BUILD.md) until 0.3 is released.*
+*Current 0.3 development UI on Chromecast with Google TV. The latest published APK is **0.2.0**; the features and interface below require a 0.3 [source build](docs/BUILD.md) or development CI artifact until 0.3 is released.*
 
 ## Build an Android endpoint, keep the SDK upstream
 
@@ -42,7 +42,7 @@ The app uses the **unmodified upstream Muse Gadget SDK** for pairing and cloud c
 
 ## Quick start
 
-**For the current 0.3 experience:** [build and install the APK](docs/BUILD.md). **For the published 0.2 release:** [download `app-debug.apk`](https://github.com/hypery11/muse-gadget-everywhere/releases/download/v0.2.0/app-debug.apk); it has the earlier pairing/TV controls and UI. Published 0.2 is a development-signed APK.
+**For the current 0.3 experience:** [build and install the APK](docs/BUILD.md), or get a development artifact from a successful [CI run](https://github.com/hypery11/muse-gadget-everywhere/actions/workflows/ci.yml). **For the published 0.2 release:** [download `app-debug.apk`](https://github.com/hypery11/muse-gadget-everywhere/releases/download/v0.2.0/app-debug.apk); it has the earlier pairing/TV controls and UI. Published 0.2 is a development-signed APK.
 
 1. **Install on your Android device.** Android 7.0+ is the minimum. Use the universal build for Chromecast; devices with 16 KiB pages need the modern build. [Choose a build and connect ADB →](docs/GETTING_STARTED.md)
 2. **Try it locally.** Open the app → **Start service → Try a card → Show card**. A visible message is your first success; no Muse account is needed for this step.

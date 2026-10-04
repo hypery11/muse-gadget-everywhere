@@ -50,3 +50,9 @@ packaging checks and is not an installable published release.
 
 
 For development checks, see [CONTRIBUTING](../CONTRIBUTING.md).
+
+## Development CI artifacts
+
+Successful GitHub Actions runs upload `muse-gadget-universal-debug` and `muse-gadget-modern-debug`, each containing an APK and `SHA256SUMS`. Download while signed into GitHub and unzip before installing. Retention is 14 days; a workflow run is not a published release.
+
+CI uses an ephemeral debug signing key, which may differ from your local build or another run. Do not uninstall a paired installation just to try a different key: uninstalling erases its data. Use a spare test device or your own consistent signing key for repeatable updates. Production release signing remains separate.

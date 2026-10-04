@@ -2,7 +2,7 @@
 
 [Project](../README.md) · [Build](BUILD.md) · [繁體中文](../README.zh-TW.md)
 
-This guide describes **0.3 development source**. The published 0.2 APK has the earlier Probe/Pair interface; it does not contain the new local control dashboard.
+This guide describes **0.3 development source/CI builds**. The published 0.2 APK has the earlier Probe/Pair interface; it does not contain the new local control dashboard.
 
 ## Choose a build
 
