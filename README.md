@@ -190,6 +190,13 @@ within 48 hours of joining):
 
 Code: `QDNUC3` — https://muse.ai/join
 
+## Contributing
+
+PRs welcome — small ones merge fast. Three rules: don't touch
+`vendor/`, keep lint green, and prove device-specific behavior in
+`docs/COMPATIBILITY.md`. Details in
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
 Apache-2.0, matching upstream. Upstream third-party notices apply unchanged.
